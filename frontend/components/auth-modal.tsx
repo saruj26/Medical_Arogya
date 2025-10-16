@@ -31,6 +31,21 @@ interface AuthModalProps {
   initialMode?: "login" | "register";
 }
 
+interface User {
+  id: number;
+  email: string;
+  name: string;
+  role: string;
+  phone?: string;
+}
+
+interface AuthResponse {
+  success: boolean;
+  message: string;
+  user?: User;
+  token?: string;
+}
+
 export function AuthModal({
   isOpen,
   onClose,
@@ -54,11 +69,12 @@ export function AuthModal({
     confirmPassword: "",
   });
 
-  const getUserRole = (email: string): string => {
-    if (email === "doctor@gmail.com") return "doctor";
-    if (email === "admin@gmail.com") return "admin";
-    return "customer";
-  };
+  // API Base URL - prefer NEXT_PUBLIC_API_BASE_URL, fallback to localhost
+  const envBase =
+    typeof process !== "undefined"
+      ? process.env.NEXT_PUBLIC_API_BASE_URL || ""
+      : "";
+  const API_BASE_URL = envBase || "http://localhost:8000/api"; // Change to your Django server URL
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,63 +82,222 @@ export function AuthModal({
     setError("");
     setSuccess("");
 
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      if (mode === "login") {
+        await handleLogin();
+      } else if (mode === "register") {
+        await handleRegister();
+      } else if (mode === "forgot") {
+        await handleForgotPassword();
+      } else if (mode === "otp") {
+        await handleVerifyOTP();
+      } else if (mode === "reset") {
+        await handleResetPassword();
+      }
+    } catch (err) {
+      // Detect network/connection errors and provide helpful hint
+      const message =
+        err instanceof Error && /Failed to fetch|network/i.test(err.message)
+          ? "Cannot connect to backend at " +
+            API_BASE_URL +
+            ". Is the Django server running?"
+          : "An error occurred. Please try again.";
+      setError(message);
+      console.error("Auth error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    if (mode === "login") {
-      if (
-        (formData.email === "doctor@gmail.com" &&
-          formData.password === "password123") ||
-        (formData.email === "admin@gmail.com" &&
-          formData.password === "password123") ||
-        (formData.email === "customer@gmail.com" &&
-          formData.password === "password123")
-      ) {
-        const role = getUserRole(formData.email);
-        localStorage.setItem("userRole", role);
-        localStorage.setItem("userEmail", formData.email);
+  const handleLogin = async () => {
+    const response = await fetch(`${API_BASE_URL}/auth/login/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+      }),
+    });
+
+    let data: any = null;
+    try {
+      data = await response.json();
+    } catch (e) {
+      const text = await response.text().catch(() => null);
+      console.error("Non-JSON response from login:", response.status, text);
+      setError(text || "Login failed.");
+      return;
+    }
+
+    if (response.ok && data.success && data.user && data.token) {
+      // Store user data in localStorage so route-level checks (which read localStorage)
+      // immediately see the authenticated user and avoid redirecting back to /auth
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userRole", data.user.role);
+      localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("userId", data.user.id.toString());
+
+      setSuccess("Login successful!");
+
+      // Redirect based on role
+      setTimeout(() => {
         onClose();
-        if (role === "admin") {
+        if (data.user!.role === "admin") {
           router.push("/admin");
-        } else if (role === "doctor") {
+        } else if (data.user!.role === "doctor") {
           router.push("/doctor");
         } else {
           router.push("/customer");
         }
+      }, 1000);
+    } else {
+      // Show detailed backend errors if available
+      if (data && data.errors) {
+        try {
+          const errs = Object.values(data.errors)
+            .flat()
+            .map((e: any) => (typeof e === "string" ? e : JSON.stringify(e)));
+          setError(errs.join(" | "));
+        } catch (e) {
+          setError(JSON.stringify(data.errors));
+        }
       } else {
-        setError("Invalid email or password.");
-      }
-    } else if (mode === "register") {
-      localStorage.setItem("userRole", "customer");
-      localStorage.setItem("userEmail", formData.email);
-      onClose();
-      router.push("/customer");
-    } else if (mode === "forgot") {
-      if (formData.email) {
-        setSuccess("OTP sent to your email!");
-        setMode("otp");
-      } else {
-        setError("Please enter a valid email.");
-      }
-    } else if (mode === "otp") {
-      if (formData.otp === "123456") {
-        setSuccess("OTP verified!");
-        setMode("reset");
-      } else {
-        setError("Invalid OTP. Try 123456");
-      }
-    } else if (mode === "reset") {
-      if (formData.newPassword === formData.confirmPassword) {
-        setSuccess("Password changed successfully!");
-        setTimeout(() => {
-          setMode("login");
-          resetForm();
-        }, 2000);
-      } else {
-        setError("Passwords don't match.");
+        setError(data.message || "Invalid email or password.");
       }
     }
+  };
 
-    setIsLoading(false);
+  const handleRegister = async () => {
+    const response = await fetch(`${API_BASE_URL}/auth/register/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name,
+        phone: formData.phone,
+        role: "customer", // Default role for new registrations
+      }),
+    });
+
+    let data: any = null;
+    try {
+      data = await response.json();
+    } catch (e) {
+      const text = await response.text().catch(() => null);
+      console.error("Non-JSON response from register:", response.status, text);
+      setError(text || "Registration failed.");
+      return;
+    }
+
+    if (response.ok && data.success && data.user && data.token) {
+      // Store user data in localStorage so route-level checks (which read localStorage)
+      // immediately see the authenticated user and avoid redirecting back to /auth
+      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("userRole", data.user.role);
+      localStorage.setItem("userEmail", data.user.email);
+      localStorage.setItem("userId", data.user.id.toString());
+
+      setSuccess("Registration successful!");
+
+      setTimeout(() => {
+        onClose();
+        router.push("/customer");
+      }, 1000);
+    } else {
+      if (data && data.errors) {
+        try {
+          const errs = Object.values(data.errors)
+            .flat()
+            .map((e: any) => (typeof e === "string" ? e : JSON.stringify(e)));
+          setError(errs.join(" | "));
+        } catch (e) {
+          setError(JSON.stringify(data.errors));
+        }
+      } else {
+        setError(data.message || "Registration failed. Please try again.");
+      }
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const response = await fetch(`${API_BASE_URL}/auth/forgot-password/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: formData.email,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      setSuccess("OTP sent to your email!");
+      setMode("otp");
+    } else {
+      setError(data.message || "Failed to send OTP. Please try again.");
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    const response = await fetch(`${API_BASE_URL}/auth/verify-otp/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        otp: formData.otp,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      setSuccess("OTP verified!");
+      setMode("reset");
+    } else {
+      setError(data.message || "Invalid OTP. Please try again.");
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (formData.newPassword !== formData.confirmPassword) {
+      setError("Passwords don't match.");
+      return;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/auth/reset-password/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: formData.email,
+        new_password: formData.newPassword,
+        otp: formData.otp,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      setSuccess("Password changed successfully!");
+      setTimeout(() => {
+        setMode("login");
+        resetForm();
+      }, 2000);
+    } else {
+      setError(data.message || "Failed to reset password. Please try again.");
+    }
   };
 
   const resetForm = () => {
@@ -186,15 +361,6 @@ export function AuthModal({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-sm sm:max-w-md p-0 bg-black/60 border-none shadow-none backdrop-blur-md">
         <div className="relative">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            className="absolute -top-8 right-0 text-white hover:bg-white/20 z-50"
-          >
-            <X className="w-4 h-4" />
-          </Button>
-
           <Card className="border border-[#1656a4]/30 shadow-xl bg-white">
             <CardHeader className="bg-gradient-to-r from-[#1656a4] to-[#1656a4]/80 text-white rounded-t-lg p-4">
               <div className="flex items-center justify-between">
@@ -343,9 +509,6 @@ export function AuthModal({
                       maxLength={6}
                       required
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Demo OTP: 123456
-                    </p>
                   </div>
                 )}
 
@@ -431,20 +594,6 @@ export function AuthModal({
                   >
                     Forgot Password?
                   </button>
-                </div>
-              )}
-
-              {mode === "login" && (
-                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <h4 className="font-medium text-blue-800 mb-2 text-sm">
-                    Demo Accounts:
-                  </h4>
-                  <div className="space-y-1 text-xs text-blue-700">
-                    <div>Patient: customer@gmail.com</div>
-                    <div>Doctor: doctor@gmail.com</div>
-                    <div>Admin: admin@gmail.com</div>
-                    <div>Password: password123</div>
-                  </div>
                 </div>
               )}
 
