@@ -128,11 +128,11 @@ export default function ContactPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-4">Visit Us</h3>
                 <p className="text-gray-600">
-                  123 Health Street
+                  750 Nelliyady Karaveddy
                   <br />
-                  Medical City, MC 12345
+                  Kunsarkada Lane
                   <br />
-                  India
+                  Jaffna
                 </p>
               </CardContent>
             </Card>

@@ -388,13 +388,13 @@ export default function HomePage() {
               <h3 className="font-semibold mb-6 text-lg">Contact</h3>
               <ul className="space-y-3 text-gray-400">
                 <li className="flex items-center gap-2">
-                  <span>📞</span> +91 98765 43210
+                  <span>📞</span> +94 21 343 3433
                 </li>
                 <li className="flex items-center gap-2">
                   <span>✉️</span> info@Arogya.com
                 </li>
                 <li className="flex items-center gap-2">
-                  <span>📍</span> 123 Health Street, Medical City
+                  <span>📍</span> 123 Nelliyady Karaveddy.
                 </li>
               </ul>
             </div>
