@@ -142,13 +142,19 @@ export function AuthModal({
 
       setSuccess("Login successful!");
 
-      // Redirect based on role
+      // Redirect based on role. If doctor and profile incomplete, send to profile edit
       setTimeout(() => {
         onClose();
         if (data.user!.role === "admin") {
           router.push("/admin");
         } else if (data.user!.role === "doctor") {
-          router.push("/doctor");
+          // backend provides is_profile_complete via UserSerializer
+          const complete = (data.user as any).is_profile_complete;
+          if (!complete) {
+            router.push("/doctor/settings");
+          } else {
+            router.push("/doctor");
+          }
         } else {
           router.push("/customer");
         }

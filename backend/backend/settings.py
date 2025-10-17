@@ -102,6 +102,7 @@ INSTALLED_APPS = [
 
     # Local apps
     'core',
+    'doctor',
     ]
 
 # Database

@@ -1,12 +1,31 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import User, OTP
+from doctor.models import DoctorProfile
 
 class UserSerializer(serializers.ModelSerializer):
+    is_profile_complete = serializers.SerializerMethodField(read_only=True)
+    doctor_id = serializers.SerializerMethodField(read_only=True)
     class Meta:
         model = User
-        fields = ('id', 'email', 'name', 'phone', 'role', 'date_joined')
-        read_only_fields = ('id', 'date_joined', 'role')
+        fields = ('id', 'email', 'name', 'phone', 'role', 'date_joined', 'is_profile_complete', 'doctor_id')
+        read_only_fields = ('id', 'date_joined', 'role', 'is_profile_complete', 'doctor_id')
+
+    def get_is_profile_complete(self, obj):
+        if obj.role == 'doctor':
+            try:
+                return obj.doctor_profile.is_profile_complete
+            except DoctorProfile.DoesNotExist:
+                return False
+        return False
+
+    def get_doctor_id(self, obj):
+        if obj.role == 'doctor':
+            try:
+                return obj.doctor_profile.doctor_id
+            except DoctorProfile.DoesNotExist:
+                return None
+        return None
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
