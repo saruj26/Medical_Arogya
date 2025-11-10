@@ -31,3 +31,20 @@ class DoctorProfile(models.Model):
 
     def __str__(self):
         return f"Dr. {self.user.name} - {self.specialty}"
+
+    def save(self, *args, **kwargs):
+        """
+        Normalize specialty to Title Case before saving so the backend
+        stores a consistent capitalized value (e.g. "Cardiology" or
+        "Internal Medicine"). This centralizes normalization and
+        applies to both create and update flows.
+        """
+        try:
+            if self.specialty and isinstance(self.specialty, str):
+                # strip surrounding whitespace and convert to Title Case
+                self.specialty = self.specialty.strip().title()
+        except Exception:
+            # if anything goes wrong, fall back to original value
+            pass
+
+        super().save(*args, **kwargs)

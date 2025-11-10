@@ -9,7 +9,14 @@ class AppointmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = '__all__'
-        read_only_fields = ('appointment_id', 'created_at', 'updated_at')
+        # patient is set by the view (request.user) so mark it read-only to
+        # avoid validation errors when creating appointments server-side.
+        read_only_fields = (
+            'appointment_id',
+            'created_at',
+            'updated_at',
+            'patient',
+        )
 
 class PrescriptionSerializer(serializers.ModelSerializer):
     doctor_name = serializers.CharField(source='doctor.user.name', read_only=True)
