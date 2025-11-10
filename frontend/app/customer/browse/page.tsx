@@ -25,6 +25,7 @@ import {
   Loader2,
 } from "lucide-react";
 import api from "@/lib/api";
+import MonthCalendar from "@/components/booking/month-calendar";
 
 interface Doctor {
   id: number;
@@ -46,15 +47,10 @@ export default function BrowseDoctors() {
   const [selectedSpecialty, setSelectedSpecialty] = useState("All Specialties");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [filteredDoctors, setFilteredDoctors] = useState<Doctor[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  const availableDates = [
-    { date: "2024-12-25", label: "Today, Dec 25" },
-    { date: "2024-12-26", label: "Tomorrow, Dec 26" },
-    { date: "2024-12-27", label: "Dec 27, 2024" },
-    { date: "2024-12-28", label: "Dec 28, 2024" },
-    { date: "2024-12-29", label: "Dec 29, 2024" },
-  ];
+  // availableDates removed - replaced by search input in filters
 
   const specialties = [
     "All Specialties",
@@ -88,6 +84,15 @@ export default function BrowseDoctors() {
         },
       });
 
+      if (response.status === 401) {
+        // token missing/expired - clear auth and redirect to login
+        localStorage.removeItem("token");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("user");
+        router.push("/");
+        return;
+      }
+
       if (response.ok) {
         const data = await response.json();
         setDoctors(data.doctors || []);
@@ -103,18 +108,44 @@ export default function BrowseDoctors() {
   useEffect(() => {
     let filtered = doctors;
 
+    // If a date is selected, restrict to doctors available that day
+    if (selectedDate) {
+      filtered = getDoctorsByDate(selectedDate);
+    }
+
     if (selectedSpecialty && selectedSpecialty !== "All Specialties") {
       filtered = filtered.filter(
         (doctor) => doctor.specialty === selectedSpecialty
       );
     }
 
-    setFilteredDoctors(filtered);
-  }, [selectedDate, selectedSpecialty, doctors]);
+    // Apply search filter (name or specialty)
+    if (searchQuery && searchQuery.trim() !== "") {
+      const q = searchQuery.trim().toLowerCase();
+      filtered = filtered.filter((doctor) => {
+        const name = (doctor.user_name || "").toLowerCase();
+        const spec = (doctor.specialty || "").toLowerCase();
+        return name.includes(q) || spec.includes(q);
+      });
+    }
 
-  const getDoctorsByDate = (date: string) => {
-    // This would need to be implemented based on actual availability data
-    return doctors;
+    setFilteredDoctors(filtered);
+  }, [selectedDate, selectedSpecialty, doctors, searchQuery]);
+
+  const normalizeDay = (day: string) => day.trim().toLowerCase();
+
+  const weekdayForISO = (iso: string) =>
+    new Date(iso)
+      .toLocaleDateString("en-US", { weekday: "long" })
+      .toLowerCase();
+
+  // Return doctors available on the given ISO date (by weekday match)
+  const getDoctorsByDate = (dateISO: string) => {
+    if (!dateISO) return doctors;
+    const weekday = weekdayForISO(dateISO);
+    return doctors.filter((d) =>
+      (d.available_days || []).some((day) => normalizeDay(day) === weekday)
+    );
   };
 
   if (loading) {
@@ -207,24 +238,15 @@ export default function BrowseDoctors() {
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-700 mb-2 block">
-                      Available Date
+                      Search
                     </label>
-                    <Select
-                      value={selectedDate}
-                      onValueChange={setSelectedDate}
-                    >
-                      <SelectTrigger className="h-10 sm:h-12 border-2 focus:border-[#1656a4]">
-                        <SelectValue placeholder="Any date" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="any">Any date</SelectItem>
-                        {availableDates.map((date) => (
-                          <SelectItem key={date.date} value={date.date}>
-                            {date.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search name or specialty"
+                      className="h-10 sm:h-12 border-2 rounded px-3 w-full focus:border-[#1656a4] focus:outline-none"
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -237,13 +259,16 @@ export default function BrowseDoctors() {
                   {filteredDoctors.length} Doctor
                   {filteredDoctors.length !== 1 ? "s" : ""} Available
                 </h2>
-                {(selectedDate || selectedSpecialty !== "All Specialties") && (
+                {(selectedDate ||
+                  selectedSpecialty !== "All Specialties" ||
+                  searchQuery) && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
                       setSelectedDate("");
                       setSelectedSpecialty("All Specialties");
+                      setSearchQuery("");
                     }}
                     className="border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white"
                   >
@@ -354,31 +379,16 @@ export default function BrowseDoctors() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                  {availableDates.map((date) => {
-                    const doctorsCount = getDoctorsByDate(date.date).length;
-                    return (
-                      <Button
-                        key={date.date}
-                        variant={
-                          selectedDate === date.date ? "default" : "outline"
-                        }
-                        className={`h-auto p-3 sm:p-4 flex-col ${
-                          selectedDate === date.date
-                            ? "bg-[#1656a4] hover:bg-[#1656a4]/90 shadow-lg"
-                            : "border-2 hover:border-[#1656a4] hover:bg-[#1656a4]/5"
-                        }`}
-                        onClick={() => setSelectedDate(date.date)}
-                      >
-                        <div className="font-semibold text-sm">
-                          {date.label}
-                        </div>
-                        <div className="text-xs opacity-80">
-                          {doctorsCount} doctor{doctorsCount !== 1 ? "s" : ""}
-                        </div>
-                      </Button>
-                    );
-                  })}
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">
+                    Select a date on the calendar to see which doctors are
+                    available on that day.
+                  </p>
+
+                  <MonthCalendar
+                    selectedDate={selectedDate}
+                    onSelectDate={(d) => setSelectedDate(d)}
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -387,54 +397,78 @@ export default function BrowseDoctors() {
               <div className="space-y-4">
                 <h2 className="text-lg sm:text-xl font-semibold">
                   Doctors Available on{" "}
-                  {availableDates.find((d) => d.date === selectedDate)?.label}
+                  {new Date(selectedDate).toLocaleDateString()}
                 </h2>
 
                 <div className="grid gap-4">
                   {getDoctorsByDate(selectedDate).map((doctor) => (
                     <Card
                       key={doctor.id}
-                      className="hover:shadow-lg transition-shadow border-2 hover:border-[#1656a4]/30"
+                      className="hover:shadow-xl transition-all duration-300 border-2 hover:border-[#1656a4]/30"
                     >
-                      <CardContent className="p-4">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                          <div className="flex flex-col sm:flex-row items-center gap-4 text-center sm:text-left">
-                            <Avatar className="w-12 h-12 sm:w-16 sm:h-16 border-2 border-[#1656a4]/20">
-                              <AvatarFallback className="bg-[#1656a4] text-white">
-                                {doctor.user_name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <h3 className="text-lg sm:text-xl font-semibold">
-                                {doctor.user_name}
-                              </h3>
-                              <p className="text-[#1656a4] font-medium">
-                                {doctor.specialty}
-                              </p>
-                              <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
-                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                <span className="text-sm font-medium">4.8</span>
-                                <span className="text-sm text-gray-500">
-                                  • {doctor.experience}
+                      <CardContent className="p-4 sm:p-6">
+                        <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
+                          <Avatar className="w-16 h-16 sm:w-20 sm:h-20 border-4 border-[#1656a4]/20 mx-auto lg:mx-0">
+                            <AvatarFallback className="bg-[#1656a4] text-white text-lg">
+                              {doctor.user_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </AvatarFallback>
+                          </Avatar>
+
+                          <div className="flex-1 text-center lg:text-left">
+                            <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
+                              {doctor.user_name}
+                            </h3>
+                            <p className="text-[#1656a4] font-semibold text-base sm:text-lg">
+                              {doctor.specialty}
+                            </p>
+                            <p className="text-gray-600 mb-3">
+                              {doctor.experience} experience
+                            </p>
+
+                            <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-2 sm:gap-4 mb-4">
+                              <div className="flex items-center gap-1">
+                                <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                                <span className="font-semibold">4.8</span>
+                                <span className="text-gray-500 text-sm">
+                                  (150+ reviews)
                                 </span>
                               </div>
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                                {doctor.is_profile_complete
+                                  ? "Available"
+                                  : "Profile Incomplete"}
+                              </Badge>
+                            </div>
+
+                            <div className="flex items-center justify-center lg:justify-start gap-2 text-sm text-gray-600">
+                              <Clock className="w-4 h-4" />
+                              <span>
+                                Available days:{" "}
+                                {doctor.available_days?.join(", ") ||
+                                  "Not specified"}
+                              </span>
                             </div>
                           </div>
 
-                          <div className="text-center">
-                            <p className="text-lg font-bold text-green-600 mb-2">
-                              ₹{doctor.consultation_fee}
-                            </p>
+                          <div className="text-center lg:text-right">
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+                              <p className="text-green-800 font-medium text-sm">
+                                Consultation Fee
+                              </p>
+                              <p className="text-xl sm:text-2xl font-bold text-green-600">
+                                ₹{doctor.consultation_fee}
+                              </p>
+                            </div>
                             <Link href={`/customer/book/${doctor.id}`}>
                               <Button
-                                className="bg-[#1656a4] hover:bg-[#1656a4]/90"
+                                className="w-full bg-[#1656a4] hover:bg-[#1656a4]/90 h-10 sm:h-12 text-sm sm:text-lg font-semibold shadow-lg"
                                 disabled={!doctor.is_profile_complete}
                               >
                                 {doctor.is_profile_complete
-                                  ? "Book Appointment"
+                                  ? "Book Now"
                                   : "Not Available"}
                               </Button>
                             </Link>

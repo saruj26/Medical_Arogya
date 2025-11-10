@@ -69,20 +69,35 @@ export default function CustomerDashboard() {
     try {
       setLoading(true);
 
-      const [appointmentsRes, prescriptionsRes] = await Promise.all([
-        fetch(api(`/api/appointments/appointments/`), {
+      const appointmentsRes = await fetch(
+        api(`/api/appointment/appointments/`),
+        {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }),
-        fetch(api(`/api/appointments/prescriptions/`), {
+        }
+      );
+
+      const prescriptionsRes = await fetch(
+        api(`/api/appointment/prescriptions/`),
+        {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }),
-      ]);
+        }
+      );
+
+      // If either endpoint returns 401 the token is invalid/expired - clear auth and redirect to login
+      if (appointmentsRes.status === 401 || prescriptionsRes.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userRole");
+        localStorage.removeItem("user");
+        localStorage.removeItem("userEmail");
+        router.push("/");
+        return;
+      }
 
       if (appointmentsRes.ok) {
         const appointmentsData = await appointmentsRes.json();

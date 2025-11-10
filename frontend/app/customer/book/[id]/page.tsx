@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,7 @@ import {
   Loader2,
 } from "lucide-react";
 import api from "@/lib/api";
+import CalendarGrid from "@/components/booking/calendar";
 
 interface Doctor {
   id: number;
@@ -56,6 +57,27 @@ export default function BookAppointment() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
   const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<"atm" | "cash_on_arrival">(
+    "atm"
+  );
+  const [lastPaymentMethod, setLastPaymentMethod] = useState<string>("");
+  const [lastPaymentStatus, setLastPaymentStatus] = useState<boolean | null>(
+    null
+  );
+  const [showCardForm, setShowCardForm] = useState(false);
+  const [card, setCard] = useState({
+    number: "",
+    name: "",
+    expiry: "",
+    cvv: "",
+  });
+  const [cardErrors, setCardErrors] = useState({
+    number: "",
+    name: "",
+    expiry: "",
+    cvv: "",
+  });
   const [doctor, setDoctor] = useState<Doctor | null>(null);
   const [loading, setLoading] = useState(true);
   const [bookingData, setBookingData] = useState({
@@ -68,20 +90,8 @@ export default function BookAppointment() {
     emergency_contact: "",
   });
 
-  const availableSlots = [
-    {
-      date: "2024-12-25",
-      slots: ["9:00 AM", "10:00 AM", "2:00 PM", "3:00 PM"],
-    },
-    {
-      date: "2024-12-26",
-      slots: ["9:00 AM", "11:00 AM", "1:00 PM", "4:00 PM"],
-    },
-    {
-      date: "2024-12-27",
-      slots: ["10:00 AM", "2:00 PM", "3:00 PM", "5:00 PM"],
-    },
-  ];
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [currentSlots, setCurrentSlots] = useState<string[]>([]);
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
@@ -93,84 +103,314 @@ export default function BookAppointment() {
     }
 
     fetchDoctor(token);
-  }, [router, params.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params?.id]);
 
+  // Prefill patient name from logged-in user (stored at login)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("user");
+      if (raw) {
+        const u = JSON.parse(raw as string);
+        if (u && u.name) {
+          setBookingData((prev) => ({ ...prev, patient_name: u.name }));
+        }
+      }
+    } catch (e) {
+      // ignore parse errors
+    }
+  }, []);
+
+  // --- Helpers (clean, reusable) ---
+  const normalizeDay = (day: string) => day.trim().toLowerCase();
+
+  const getUpcomingDatesForDoctor = (
+    days: string[] | undefined,
+    count = 14
+  ) => {
+    if (!days || days.length === 0) return [];
+    const wanted = new Set(days.map((d) => normalizeDay(d)));
+    const out: string[] = [];
+    const today = new Date();
+    for (let i = 0; out.length < count && i < 60; i++) {
+      const dt = new Date(today);
+      dt.setDate(today.getDate() + i);
+      const weekday = dt
+        .toLocaleDateString("en-US", { weekday: "long" })
+        .toLowerCase();
+      if (wanted.has(weekday)) out.push(dt.toISOString().slice(0, 10));
+    }
+    return out;
+  };
+
+  const startFromRange = (slotLabel: string) => slotLabel.split("-")[0].trim();
+
+  const time24ToAmPm = (time24: string) => {
+    const [hms] = time24.split(".");
+    const [h, m] = hms.split(":");
+    let hour = parseInt(h, 10);
+    const minute = m || "00";
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 === 0 ? 12 : hour % 12;
+    return `${hour}:${minute.padStart(2, "0")} ${ampm}`;
+  };
+
+  const ampmToTime24 = (ampm: string) => {
+    // convert "9:00 AM" -> "09:00:00"
+    const [time, period] = ampm.split(" ");
+    const [h, m] = time.split(":");
+    let hour = parseInt(h, 10);
+    if (period === "PM" && hour !== 12) hour += 12;
+    if (period === "AM" && hour === 12) hour = 0;
+    return `${String(hour).padStart(2, "0")}:${String(m || "00").padStart(
+      2,
+      "0"
+    )}:00`;
+  };
+
+  // --- Card helpers ---
+  const detectCardType = (digits: string) => {
+    if (!digits)
+      return {
+        type: "unknown",
+        maxLength: 16,
+        groups: [4, 4, 4, 4],
+        cvvLength: 3,
+      };
+    if (/^3[47]/.test(digits))
+      return { type: "amex", maxLength: 15, groups: [4, 6, 5], cvvLength: 4 };
+    if (/^(5[1-5]|2(2[2-9]|[3-6][0-9]|7[01]|720))/.test(digits))
+      return {
+        type: "mastercard",
+        maxLength: 16,
+        groups: [4, 4, 4, 4],
+        cvvLength: 3,
+      };
+    if (/^4/.test(digits))
+      return {
+        type: "visa",
+        maxLength: 16,
+        groups: [4, 4, 4, 4],
+        cvvLength: 3,
+      };
+    if (/^(6011|65|64[4-9])/.test(digits))
+      return {
+        type: "discover",
+        maxLength: 16,
+        groups: [4, 4, 4, 4],
+        cvvLength: 3,
+      };
+    return {
+      type: "unknown",
+      maxLength: 16,
+      groups: [4, 4, 4, 4],
+      cvvLength: 3,
+    };
+  };
+
+  const formatCardNumber = (digits: string, groups: number[]) => {
+    const parts: string[] = [];
+    let i = 0;
+    for (const g of groups) {
+      if (i >= digits.length) break;
+      parts.push(digits.slice(i, i + g));
+      i += g;
+    }
+    if (i < digits.length) parts.push(digits.slice(i));
+    return parts.join(" ");
+  };
+
+  const luhnCheck = (n: string) => {
+    let sum = 0;
+    let double = false;
+    for (let i = n.length - 1; i >= 0; i--) {
+      let d = parseInt(n.charAt(i), 10);
+      if (isNaN(d)) return false;
+      if (double) {
+        d = d * 2;
+        if (d > 9) d -= 9;
+      }
+      sum += d;
+      double = !double;
+    }
+    return sum % 10 === 0;
+  };
+
+  const handleCardNumberChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    const info = detectCardType(digits);
+    const limited = digits.slice(0, info.maxLength);
+    const formatted = formatCardNumber(limited, info.groups);
+    setCard((c) => ({ ...c, number: formatted }));
+    // adjust CVV length if needed
+    if (card.cvv && card.cvv.length > info.cvvLength) {
+      setCard((c) => ({ ...c, cvv: c.cvv.slice(0, info.cvvLength) }));
+    }
+  };
+
+  const handleExpiryChange = (raw: string) => {
+    // allow only digits and slash, auto-insert slash after 2 digits
+    const digits = raw.replace(/[^0-9]/g, "");
+    let out = digits;
+    if (digits.length > 2) out = digits.slice(0, 2) + "/" + digits.slice(2, 4);
+    setCard((c) => ({ ...c, expiry: out }));
+  };
+
+  const handleCvvChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    const info = detectCardType(card.number.replace(/\s+/g, ""));
+    setCard((c) => ({ ...c, cvv: digits.slice(0, info.cvvLength) }));
+  };
+
+  // --- Data fetching ---
   const fetchDoctor = async (token: string) => {
     try {
       setLoading(true);
-      const response = await fetch(api(`/api/doctor/doctors/`), {
+      const res = await fetch(api(`/api/doctor/doctors/`), {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        const foundDoctor = data.doctors?.find(
+      if (res.ok) {
+        const data = await res.json();
+        const found = data.doctors?.find(
           (d: Doctor) => d.id === parseInt(params.id as string)
         );
-        setDoctor(foundDoctor || null);
+        setDoctor(found || null);
+        if (found)
+          setAvailableDates(
+            getUpcomingDatesForDoctor(found.available_days, 14)
+          );
       }
-    } catch (error) {
-      console.error("Error fetching doctor:", error);
+    } catch (e) {
+      console.error("Error fetching doctor", e);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAppointmentBooking = async () => {
+  const fetchBookedSlotsForDate = async (dateISO: string) => {
+    if (!doctor) return [] as string[];
+    const token = localStorage.getItem("token");
+    try {
+      const q = new URLSearchParams({
+        doctor: String(doctor.id),
+        date: dateISO,
+      });
+      const r = await fetch(
+        api(`/api/appointment/appointments/?${q.toString()}`),
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (!r.ok) return [];
+      const json = await r.json();
+      return (json.appointments || []).map((a: any) =>
+        time24ToAmPm(a.appointment_time)
+      );
+    } catch (e) {
+      console.error("Failed to fetch booked slots", e);
+      return [];
+    }
+  };
+
+  // derive baseSlots from doctor profile
+  const baseSlots = useMemo(
+    () => (doctor?.available_time_slots || []).map(startFromRange),
+    [doctor]
+  );
+
+  // recompute available slots for a selected date
+  useEffect(() => {
+    let mounted = true;
+    const run = async () => {
+      if (!doctor || !selectedDate) {
+        setCurrentSlots([]);
+        return;
+      }
+      const booked = await fetchBookedSlotsForDate(selectedDate);
+      const bookedSet = new Set(booked);
+      const filtered = baseSlots.filter((t) => !bookedSet.has(t));
+      if (mounted) {
+        setCurrentSlots(filtered);
+        setSelectedTime("");
+      }
+    };
+    run();
+    return () => {
+      mounted = false;
+    };
+  }, [doctor, selectedDate, baseSlots]);
+
+  const handleAppointmentBooking = async (method: string) => {
     const token = localStorage.getItem("token");
     if (!token || !doctor) return;
-
+    setBookingError(null);
     setPaymentProcessing(true);
-
     try {
-      const appointmentData = {
+      const appointmentData: any = {
         doctor: doctor.id,
         appointment_date: selectedDate,
-        appointment_time: selectedTime,
+        appointment_time: ampmToTime24(selectedTime),
         reason: bookingData.reason,
         symptoms: bookingData.symptoms,
         patient_name: bookingData.patient_name,
-        patient_age: parseInt(bookingData.patient_age),
+        patient_age: parseInt(String(bookingData.patient_age)) || 0,
         patient_gender: bookingData.patient_gender,
         patient_phone: bookingData.patient_phone,
         emergency_contact: bookingData.emergency_contact,
         consultation_fee: doctor.consultation_fee,
-        payment_status: true, // Simulate successful payment
+        payment_method: method,
+        // payment_status will be set by backend for 'atm' or left false for cash
       };
 
-      const response = await fetch(
-        api(`/api/appointments/appointments/create/`),
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(appointmentData),
-        }
-      );
+      const res = await fetch(api(`/api/appointment/appointments/create/`), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(appointmentData),
+      });
 
-      if (response.ok) {
+      if (res.ok) {
+        const json = await res.json();
+        const appt = json.appointment || {};
+        const paid = !!appt.payment_status;
         setPaymentProcessing(false);
+        setLastPaymentMethod(method);
+        setLastPaymentStatus(paid);
         setStep(4);
-        setTimeout(() => {
-          router.push("/customer");
-        }, 3000);
+        setTimeout(() => router.push("/customer"), 3000);
       } else {
-        throw new Error("Failed to book appointment");
+        const err = await res.json().catch(() => null);
+        console.error("Booking failed", err);
+        // show user-friendly message
+        let msg = "Failed to book appointment";
+        if (err) {
+          if (err.message) msg = err.message;
+          else if (err.errors) {
+            try {
+              const parts: string[] = [];
+              for (const k of Object.keys(err.errors)) {
+                parts.push(`${k}: ${JSON.stringify(err.errors[k])}`);
+              }
+              msg = parts.join("; ");
+            } catch (e) {
+              // ignore
+            }
+          }
+        }
+        setBookingError(msg);
+        setPaymentProcessing(false);
       }
-    } catch (error) {
-      console.error("Error booking appointment:", error);
+    } catch (e) {
+      console.error("Error booking appointment:", e);
       setPaymentProcessing(false);
-      // Handle error appropriately
     }
   };
 
-  const currentSlots =
-    availableSlots.find((slot) => slot.date === selectedDate)?.slots || [];
+  // currentSlots is maintained by effect above; fallback to empty
+  // (already defined in state)
 
   if (loading) {
     return (
@@ -340,37 +580,22 @@ export default function BookAppointment() {
                     <Label className="text-base font-semibold text-gray-700">
                       Available Dates
                     </Label>
-                    <div className="grid grid-cols-1 gap-3 mt-3">
-                      {availableSlots.map((slot) => (
-                        <Button
-                          key={slot.date}
-                          variant={
-                            selectedDate === slot.date ? "default" : "outline"
-                          }
-                          className={`h-auto p-4 justify-start ${
-                            selectedDate === slot.date
-                              ? "bg-[#1656a4] hover:bg-[#1656a4]/90 shadow-lg"
-                              : "border-2 hover:border-[#1656a4] hover:bg-[#1656a4]/5"
-                          }`}
-                          onClick={() => {
-                            setSelectedDate(slot.date);
-                            setSelectedTime("");
-                          }}
-                        >
-                          <div className="text-left">
-                            <div className="font-semibold">
-                              {new Date(slot.date).toLocaleDateString("en-US", {
-                                weekday: "long",
-                                month: "long",
-                                day: "numeric",
-                              })}
-                            </div>
-                            <div className="text-sm opacity-80">
-                              {slot.slots.length} slots available
-                            </div>
-                          </div>
-                        </Button>
-                      ))}
+                    <div className="mt-3">
+                      {!selectedDate && (
+                        <p className="text-sm text-gray-600 mb-2">
+                          Please select a date on the calendar to view available
+                          time slots.
+                        </p>
+                      )}
+
+                      <CalendarGrid
+                        dates={availableDates}
+                        selectedDate={selectedDate}
+                        onSelectDate={(d) => {
+                          setSelectedDate(d);
+                          setSelectedTime("");
+                        }}
+                      />
                     </div>
                   </div>
 
@@ -380,6 +605,11 @@ export default function BookAppointment() {
                         Available Time Slots
                       </Label>
                       <div className="grid grid-cols-2 gap-3 mt-3">
+                        {currentSlots.length === 0 && (
+                          <div className="col-span-2 text-sm text-gray-600">
+                            No available slots for this date.
+                          </div>
+                        )}
                         {currentSlots.map((time) => (
                           <Button
                             key={time}
@@ -687,6 +917,11 @@ export default function BookAppointment() {
                     </div>
                   ) : (
                     <div className="space-y-6">
+                      {bookingError && (
+                        <div className="p-3 bg-red-50 border border-red-200 text-red-800 rounded">
+                          {bookingError}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg border border-green-200">
                         <Shield className="w-5 h-5 text-green-600" />
                         <span className="text-green-800 font-medium">
@@ -720,14 +955,200 @@ export default function BookAppointment() {
                         >
                           Back
                         </Button>
+
+                        {/* ATM / Card payment - show card gateway form when clicked */}
                         <Button
                           className="flex-1 h-12 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-lg font-semibold shadow-lg"
-                          onClick={handleAppointmentBooking}
+                          onClick={() => setShowCardForm(true)}
                         >
                           <CreditCard className="w-5 h-5 mr-2" />
-                          Pay ₹{doctor.consultation_fee}
+                          Pay by ATM/Card ₹{doctor.consultation_fee}
                         </Button>
                       </div>
+
+                      <div className="mt-3">
+                        <Button
+                          variant="ghost"
+                          className="w-full h-12 border-2 border-dashed border-gray-300 text-gray-700 hover:bg-gray-50"
+                          onClick={() =>
+                            handleAppointmentBooking("cash_on_arrival")
+                          }
+                        >
+                          <CheckCircle className="w-5 h-5 mr-2" />
+                          Cash on Arrival (Pay at clinic)
+                        </Button>
+                      </div>
+
+                      {showCardForm && (
+                        <div className="mt-4 p-4 border rounded-lg bg-white">
+                          <h4 className="font-semibold mb-2">
+                            Enter Card Details
+                          </h4>
+                          <div className="grid grid-cols-1 gap-3">
+                            <div>
+                              <Label className="text-sm">Card Number</Label>
+                              <div className="flex items-center gap-2">
+                                <Input
+                                  value={card.number}
+                                  onChange={(e) =>
+                                    handleCardNumberChange(e.target.value)
+                                  }
+                                  placeholder="4242 4242 4242 4242"
+                                  className="mt-2 h-12 border-2"
+                                />
+                                <div className="text-sm text-gray-600 px-2 py-1 rounded border bg-gray-50 mt-2">
+                                  {(() => {
+                                    const info = detectCardType(
+                                      card.number.replace(/\s+/g, "")
+                                    );
+                                    return info.type === "unknown"
+                                      ? "Card"
+                                      : info.type.toUpperCase();
+                                  })()}
+                                </div>
+                              </div>
+                              {cardErrors.number && (
+                                <p className="text-xs text-red-600 mt-1">
+                                  {cardErrors.number}
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <Label className="text-sm">Name on Card</Label>
+                              <Input
+                                value={card.name}
+                                onChange={(e) =>
+                                  setCard({ ...card, name: e.target.value })
+                                }
+                                placeholder="Full name as on card"
+                                className="mt-2 h-12 border-2"
+                              />
+                              {cardErrors.name && (
+                                <p className="text-xs text-red-600 mt-1">
+                                  {cardErrors.name}
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3">
+                              <div>
+                                <Label className="text-sm">
+                                  Expiry (MM/YY)
+                                </Label>
+                                <Input
+                                  value={card.expiry}
+                                  onChange={(e) =>
+                                    handleExpiryChange(e.target.value)
+                                  }
+                                  placeholder="MM/YY"
+                                  className="mt-2 h-12 border-2"
+                                  inputMode="numeric"
+                                  maxLength={5}
+                                />
+                                {cardErrors.expiry && (
+                                  <p className="text-xs text-red-600 mt-1">
+                                    {cardErrors.expiry}
+                                  </p>
+                                )}
+                              </div>
+                              <div>
+                                <Label className="text-sm">CVV</Label>
+                                <Input
+                                  value={card.cvv}
+                                  onChange={(e) =>
+                                    handleCvvChange(e.target.value)
+                                  }
+                                  placeholder="123"
+                                  className="mt-2 h-12 border-2"
+                                  inputMode="numeric"
+                                  maxLength={4}
+                                />
+                                {cardErrors.cvv && (
+                                  <p className="text-xs text-red-600 mt-1">
+                                    {cardErrors.cvv}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex gap-2 mt-2">
+                              <Button
+                                variant="outline"
+                                onClick={() => setShowCardForm(false)}
+                                className="flex-1 h-12"
+                              >
+                                Cancel
+                              </Button>
+                              <Button
+                                className="flex-1 h-12 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-lg font-semibold"
+                                onClick={async () => {
+                                  const errs: any = {
+                                    number: "",
+                                    name: "",
+                                    expiry: "",
+                                    cvv: "",
+                                  };
+                                  const num = card.number.replace(/\s+/g, "");
+                                  const luhn = (n: string) => {
+                                    let sum = 0;
+                                    let shouldDouble = false;
+                                    for (let i = n.length - 1; i >= 0; i--) {
+                                      let digit = parseInt(n.charAt(i), 10);
+                                      if (isNaN(digit)) return false;
+                                      if (shouldDouble) {
+                                        digit = digit * 2;
+                                        if (digit > 9) digit -= 9;
+                                      }
+                                      sum += digit;
+                                      shouldDouble = !shouldDouble;
+                                    }
+                                    return sum % 10 === 0;
+                                  };
+
+                                  if (!num || num.length < 12 || !luhn(num))
+                                    errs.number = "Enter a valid card number";
+                                  if (!card.name || card.name.trim().length < 2)
+                                    errs.name = "Enter name on card";
+                                  const m = card.expiry.match(
+                                    /^(0[1-9]|1[0-2])\/(\d{2})$/
+                                  );
+                                  if (!m) errs.expiry = "Expiry must be MM/YY";
+                                  else {
+                                    const mm = parseInt(m[1], 10);
+                                    const yy = parseInt(m[2], 10) + 2000;
+                                    const exp = new Date(yy, mm - 1, 1);
+                                    const now = new Date();
+                                    exp.setMonth(exp.getMonth() + 1);
+                                    exp.setDate(0);
+                                    if (exp < now)
+                                      errs.expiry =
+                                        "Card expiry must be in the future";
+                                  }
+                                  if (!/^[0-9]{3,4}$/.test(card.cvv))
+                                    errs.cvv = "Enter a valid CVV";
+
+                                  setCardErrors(errs);
+                                  const hasErr = Object.values(errs).some(
+                                    (v) => !!v
+                                  );
+                                  if (hasErr) {
+                                    // Do not fallback automatically - show validation errors and stop submission.
+                                    setBookingError(
+                                      "Please correct the highlighted card fields before proceeding."
+                                    );
+                                    return;
+                                  }
+
+                                  await handleAppointmentBooking("atm");
+                                }}
+                              >
+                                Confirm & Pay ₹{doctor.consultation_fee}
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -742,11 +1163,22 @@ export default function BookAppointment() {
                   <CheckCircle className="w-12 h-12 text-green-600" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                  Payment Successful!
+                  {lastPaymentStatus
+                    ? "Payment Successful!"
+                    : "Booking Confirmed!"}
                 </h2>
                 <p className="text-xl text-gray-600 mb-8">
-                  Your appointment has been confirmed and payment of ₹
-                  {doctor.consultation_fee} has been processed.
+                  {lastPaymentStatus ? (
+                    <>
+                      Your appointment has been confirmed and payment of ₹
+                      {doctor.consultation_fee} has been processed.
+                    </>
+                  ) : (
+                    <>
+                      Your appointment has been confirmed. Please pay ₹
+                      {doctor.consultation_fee} at the clinic (Cash on Arrival).
+                    </>
+                  )}
                 </p>
 
                 <div className="bg-gradient-to-r from-[#1656a4]/10 to-blue-50 p-6 rounded-xl mb-8">
