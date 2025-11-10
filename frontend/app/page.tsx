@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { AuthModal } from "@/components/auth-modal";
+import { AuthModal } from "@/components/auth/auth-modal";
 import {
   Calendar,
   Clock,

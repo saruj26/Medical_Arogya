@@ -17,7 +17,7 @@ export default function CustomerSettings() {
     const email = localStorage.getItem("userEmail")
 
     if (role !== "customer") {
-      router.push("/auth")
+      router.push("/")
       return
     }
 

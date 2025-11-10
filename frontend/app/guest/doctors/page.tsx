@@ -133,7 +133,7 @@ export default function GuestDoctorsPage() {
             </Link>
           </nav>
           <div className="flex items-center gap-3">
-            <Link href="/auth">
+            <Link href="/">
               <Button
                 variant="outline"
                 className="border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white bg-transparent"
@@ -141,7 +141,7 @@ export default function GuestDoctorsPage() {
                 Sign In
               </Button>
             </Link>
-            <Link href="/auth?mode=register">
+            <Link href="/?mode=register">
               <Button className="bg-[#1656a4] hover:bg-[#1656a4]/90">
                 Register
               </Button>
@@ -299,7 +299,7 @@ export default function GuestDoctorsPage() {
                           </Link>
                         </div>
 
-                        <Link href="/auth">
+                        <Link href="/">
                           <Button
                             variant="outline"
                             className="w-full border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white bg-transparent"
@@ -328,7 +328,7 @@ export default function GuestDoctorsPage() {
               expert doctors.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/auth?mode=register">
+              <Link href="/?mode=register">
                 <Button className="bg-[#1656a4] hover:bg-[#1656a4]/90 h-12 px-8 text-lg font-semibold">
                   Register Now
                 </Button>

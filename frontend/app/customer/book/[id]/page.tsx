@@ -32,18 +32,43 @@ import {
   Clock,
   Shield,
   Zap,
+  Loader2,
 } from "lucide-react";
+import api from "@/lib/api";
 
-// Mock doctor data
-const mockDoctor = {
-  id: 1,
-  name: "Dr. Sarah Johnson",
-  specialty: "Cardiology",
-  experience: "15 years",
-  rating: 4.8,
-  image: "/placeholder.svg?height=100&width=100",
-  fee: 500,
-  availableSlots: [
+interface Doctor {
+  id: number;
+  doctor_id: string;
+  user_name: string;
+  specialty: string;
+  experience: string;
+  qualification: string;
+  bio: string;
+  consultation_fee: string;
+  available_days: string[];
+  available_time_slots: string[];
+}
+
+export default function BookAppointment() {
+  const router = useRouter();
+  const params = useParams();
+  const [step, setStep] = useState(1);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [doctor, setDoctor] = useState<Doctor | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [bookingData, setBookingData] = useState({
+    reason: "",
+    symptoms: "",
+    patient_name: "",
+    patient_age: "",
+    patient_gender: "",
+    patient_phone: "",
+    emergency_contact: "",
+  });
+
+  const availableSlots = [
     {
       date: "2024-12-25",
       slots: ["9:00 AM", "10:00 AM", "2:00 PM", "3:00 PM"],
@@ -56,61 +81,135 @@ const mockDoctor = {
       date: "2024-12-27",
       slots: ["10:00 AM", "2:00 PM", "3:00 PM", "5:00 PM"],
     },
-  ],
-};
-
-export default function BookAppointment() {
-  const router = useRouter();
-  const params = useParams();
-  const [step, setStep] = useState(1);
-  const [selectedDate, setSelectedDate] = useState("");
-  const [selectedTime, setSelectedTime] = useState("");
-  const [paymentProcessing, setPaymentProcessing] = useState(false);
-  const [bookingData, setBookingData] = useState({
-    reason: "",
-    symptoms: "",
-    patientName: "",
-    patientAge: "",
-    patientGender: "",
-    patientPhone: "",
-    emergencyContact: "",
-    cardNumber: "",
-    expiryDate: "",
-    cvv: "",
-    cardName: "",
-  });
+  ];
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
-    if (role !== "customer") {
-      router.push("/auth");
+    const token = localStorage.getItem("token");
+
+    if (role !== "customer" || !token) {
+      router.push("/");
+      return;
     }
-  }, [router]);
 
-  const handlePaymentSubmit = async () => {
-    setPaymentProcessing(true);
+    fetchDoctor(token);
+  }, [router, params.id]);
 
-    // Simulate payment processing
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+  const fetchDoctor = async (token: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(api(`/api/doctor/doctors/`), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-    setPaymentProcessing(false);
-    setStep(4);
-
-    setTimeout(() => {
-      router.push("/customer");
-    }, 3000);
+      if (response.ok) {
+        const data = await response.json();
+        const foundDoctor = data.doctors?.find(
+          (d: Doctor) => d.id === parseInt(params.id as string)
+        );
+        setDoctor(foundDoctor || null);
+      }
+    } catch (error) {
+      console.error("Error fetching doctor:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const availableSlots =
-    mockDoctor.availableSlots.find((slot) => slot.date === selectedDate)
-      ?.slots || [];
+  const handleAppointmentBooking = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !doctor) return;
+
+    setPaymentProcessing(true);
+
+    try {
+      const appointmentData = {
+        doctor: doctor.id,
+        appointment_date: selectedDate,
+        appointment_time: selectedTime,
+        reason: bookingData.reason,
+        symptoms: bookingData.symptoms,
+        patient_name: bookingData.patient_name,
+        patient_age: parseInt(bookingData.patient_age),
+        patient_gender: bookingData.patient_gender,
+        patient_phone: bookingData.patient_phone,
+        emergency_contact: bookingData.emergency_contact,
+        consultation_fee: doctor.consultation_fee,
+        payment_status: true, // Simulate successful payment
+      };
+
+      const response = await fetch(
+        api(`/api/appointments/appointments/create/`),
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(appointmentData),
+        }
+      );
+
+      if (response.ok) {
+        setPaymentProcessing(false);
+        setStep(4);
+        setTimeout(() => {
+          router.push("/customer");
+        }, 3000);
+      } else {
+        throw new Error("Failed to book appointment");
+      }
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+      setPaymentProcessing(false);
+      // Handle error appropriately
+    }
+  };
+
+  const currentSlots =
+    availableSlots.find((slot) => slot.date === selectedDate)?.slots || [];
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-[#1656a4]" />
+          <p className="text-gray-600">Loading doctor information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!doctor) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <Stethoscope className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+            Doctor Not Found
+          </h2>
+          <p className="text-gray-600 mb-4">
+            The requested doctor could not be found.
+          </p>
+          <Link href="/customer/browse">
+            <Button className="bg-[#1656a4] hover:bg-[#1656a4]/90">
+              Back to Doctors
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/customer">
+          <Link href="/customer/browse">
             <Button
               variant="outline"
               size="sm"
@@ -182,12 +281,8 @@ export default function BookAppointment() {
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <Avatar className="w-20 h-20 border-4 border-[#1656a4]/20">
-                      <AvatarImage
-                        src={mockDoctor.image || "/placeholder.svg"}
-                        alt={mockDoctor.name}
-                      />
                       <AvatarFallback className="bg-[#1656a4] text-white text-lg">
-                        {mockDoctor.name
+                        {doctor.user_name
                           .split(" ")
                           .map((n) => n[0])
                           .join("")}
@@ -195,21 +290,19 @@ export default function BookAppointment() {
                     </Avatar>
                     <div className="flex-1">
                       <h3 className="text-2xl font-bold text-gray-900">
-                        {mockDoctor.name}
+                        {doctor.user_name}
                       </h3>
                       <p className="text-[#1656a4] font-semibold text-lg">
-                        {mockDoctor.specialty}
+                        {doctor.specialty}
                       </p>
                       <p className="text-gray-600 mb-3">
-                        {mockDoctor.experience} experience
+                        {doctor.experience} experience
                       </p>
 
                       <div className="flex items-center gap-4 mb-4">
                         <div className="flex items-center gap-1">
                           <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                          <span className="font-semibold">
-                            {mockDoctor.rating}
-                          </span>
+                          <span className="font-semibold">4.8</span>
                           <span className="text-gray-500 text-sm">
                             (150+ reviews)
                           </span>
@@ -222,7 +315,7 @@ export default function BookAppointment() {
                             Consultation Fee
                           </span>
                           <span className="text-2xl font-bold text-green-600">
-                            ₹{mockDoctor.fee}
+                            ₹{doctor.consultation_fee}
                           </span>
                         </div>
                         <p className="text-green-600 text-sm mt-1">
@@ -248,7 +341,7 @@ export default function BookAppointment() {
                       Available Dates
                     </Label>
                     <div className="grid grid-cols-1 gap-3 mt-3">
-                      {mockDoctor.availableSlots.map((slot) => (
+                      {availableSlots.map((slot) => (
                         <Button
                           key={slot.date}
                           variant={
@@ -287,7 +380,7 @@ export default function BookAppointment() {
                         Available Time Slots
                       </Label>
                       <div className="grid grid-cols-2 gap-3 mt-3">
-                        {availableSlots.map((time) => (
+                        {currentSlots.map((time) => (
                           <Button
                             key={time}
                             variant={
@@ -335,18 +428,18 @@ export default function BookAppointment() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <Label
-                      htmlFor="patientName"
+                      htmlFor="patient_name"
                       className="text-base font-semibold"
                     >
                       Patient Name *
                     </Label>
                     <Input
-                      id="patientName"
-                      value={bookingData.patientName}
+                      id="patient_name"
+                      value={bookingData.patient_name}
                       onChange={(e) =>
                         setBookingData({
                           ...bookingData,
-                          patientName: e.target.value,
+                          patient_name: e.target.value,
                         })
                       }
                       placeholder="Enter patient full name"
@@ -355,19 +448,19 @@ export default function BookAppointment() {
                   </div>
                   <div>
                     <Label
-                      htmlFor="patientAge"
+                      htmlFor="patient_age"
                       className="text-base font-semibold"
                     >
                       Age *
                     </Label>
                     <Input
-                      id="patientAge"
+                      id="patient_age"
                       type="number"
-                      value={bookingData.patientAge}
+                      value={bookingData.patient_age}
                       onChange={(e) =>
                         setBookingData({
                           ...bookingData,
-                          patientAge: e.target.value,
+                          patient_age: e.target.value,
                         })
                       }
                       placeholder="Enter age"
@@ -376,15 +469,18 @@ export default function BookAppointment() {
                   </div>
                   <div>
                     <Label
-                      htmlFor="patientGender"
+                      htmlFor="patient_gender"
                       className="text-base font-semibold"
                     >
                       Gender *
                     </Label>
                     <Select
-                      value={bookingData.patientGender}
+                      value={bookingData.patient_gender}
                       onValueChange={(value) =>
-                        setBookingData({ ...bookingData, patientGender: value })
+                        setBookingData({
+                          ...bookingData,
+                          patient_gender: value,
+                        })
                       }
                     >
                       <SelectTrigger className="mt-2 h-12 border-2 focus:border-[#1656a4]">
@@ -399,19 +495,19 @@ export default function BookAppointment() {
                   </div>
                   <div>
                     <Label
-                      htmlFor="patientPhone"
+                      htmlFor="patient_phone"
                       className="text-base font-semibold"
                     >
                       Phone Number *
                     </Label>
                     <Input
-                      id="patientPhone"
+                      id="patient_phone"
                       type="tel"
-                      value={bookingData.patientPhone}
+                      value={bookingData.patient_phone}
                       onChange={(e) =>
                         setBookingData({
                           ...bookingData,
-                          patientPhone: e.target.value,
+                          patient_phone: e.target.value,
                         })
                       }
                       placeholder="+91 98765 43210"
@@ -422,18 +518,18 @@ export default function BookAppointment() {
 
                 <div>
                   <Label
-                    htmlFor="emergencyContact"
+                    htmlFor="emergency_contact"
                     className="text-base font-semibold"
                   >
                     Emergency Contact
                   </Label>
                   <Input
-                    id="emergencyContact"
-                    value={bookingData.emergencyContact}
+                    id="emergency_contact"
+                    value={bookingData.emergency_contact}
                     onChange={(e) =>
                       setBookingData({
                         ...bookingData,
-                        emergencyContact: e.target.value,
+                        emergency_contact: e.target.value,
                       })
                     }
                     placeholder="Emergency contact number"
@@ -487,10 +583,10 @@ export default function BookAppointment() {
                     className="flex-1 h-12 bg-[#1656a4] hover:bg-[#1656a4]/90 text-lg font-semibold shadow-lg"
                     onClick={() => setStep(3)}
                     disabled={
-                      !bookingData.patientName ||
-                      !bookingData.patientAge ||
-                      !bookingData.patientGender ||
-                      !bookingData.patientPhone ||
+                      !bookingData.patient_name ||
+                      !bookingData.patient_age ||
+                      !bookingData.patient_gender ||
+                      !bookingData.patient_phone ||
                       !bookingData.reason
                     }
                   >
@@ -512,21 +608,17 @@ export default function BookAppointment() {
                   <div className="space-y-4">
                     <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
                       <Avatar className="w-12 h-12">
-                        <AvatarImage
-                          src={mockDoctor.image || "/placeholder.svg"}
-                          alt={mockDoctor.name}
-                        />
                         <AvatarFallback className="bg-[#1656a4] text-white">
-                          {mockDoctor.name
+                          {doctor.user_name
                             .split(" ")
                             .map((n) => n[0])
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <p className="font-semibold">{mockDoctor.name}</p>
+                        <p className="font-semibold">{doctor.user_name}</p>
                         <p className="text-sm text-gray-600">
-                          {mockDoctor.specialty}
+                          {doctor.specialty}
                         </p>
                       </div>
                     </div>
@@ -535,7 +627,7 @@ export default function BookAppointment() {
                       <div className="flex justify-between py-2 border-b">
                         <span className="text-gray-600">Patient:</span>
                         <span className="font-medium">
-                          {bookingData.patientName}
+                          {bookingData.patient_name}
                         </span>
                       </div>
                       <div className="flex justify-between py-2 border-b">
@@ -559,7 +651,7 @@ export default function BookAppointment() {
                           Total Amount:
                         </span>
                         <span className="text-2xl font-bold text-green-600">
-                          ₹{mockDoctor.fee}
+                          ₹{doctor.consultation_fee}
                         </span>
                       </div>
                     </div>
@@ -602,94 +694,6 @@ export default function BookAppointment() {
                         </span>
                       </div>
 
-                      <div>
-                        <Label
-                          htmlFor="cardName"
-                          className="text-base font-semibold"
-                        >
-                          Cardholder Name *
-                        </Label>
-                        <Input
-                          id="cardName"
-                          value={bookingData.cardName}
-                          onChange={(e) =>
-                            setBookingData({
-                              ...bookingData,
-                              cardName: e.target.value,
-                            })
-                          }
-                          placeholder="Enter name on card"
-                          className="mt-2 h-12 border-2 focus:border-[#1656a4]"
-                        />
-                      </div>
-
-                      <div>
-                        <Label
-                          htmlFor="cardNumber"
-                          className="text-base font-semibold"
-                        >
-                          Card Number *
-                        </Label>
-                        <div className="relative">
-                          <Input
-                            id="cardNumber"
-                            value={bookingData.cardNumber}
-                            onChange={(e) =>
-                              setBookingData({
-                                ...bookingData,
-                                cardNumber: e.target.value,
-                              })
-                            }
-                            placeholder="1234 5678 9012 3456"
-                            className="mt-2 h-12 border-2 focus:border-[#1656a4] pr-12"
-                          />
-                          <CreditCard className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <Label
-                            htmlFor="expiryDate"
-                            className="text-base font-semibold"
-                          >
-                            Expiry Date *
-                          </Label>
-                          <Input
-                            id="expiryDate"
-                            value={bookingData.expiryDate}
-                            onChange={(e) =>
-                              setBookingData({
-                                ...bookingData,
-                                expiryDate: e.target.value,
-                              })
-                            }
-                            placeholder="MM/YY"
-                            className="mt-2 h-12 border-2 focus:border-[#1656a4]"
-                          />
-                        </div>
-                        <div>
-                          <Label
-                            htmlFor="cvv"
-                            className="text-base font-semibold"
-                          >
-                            CVV *
-                          </Label>
-                          <Input
-                            id="cvv"
-                            value={bookingData.cvv}
-                            onChange={(e) =>
-                              setBookingData({
-                                ...bookingData,
-                                cvv: e.target.value,
-                              })
-                            }
-                            placeholder="123"
-                            className="mt-2 h-12 border-2 focus:border-[#1656a4]"
-                          />
-                        </div>
-                      </div>
-
                       <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
                         <div className="flex items-center gap-2 mb-2">
                           <Zap className="w-4 h-4 text-blue-600" />
@@ -718,16 +722,10 @@ export default function BookAppointment() {
                         </Button>
                         <Button
                           className="flex-1 h-12 bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 text-lg font-semibold shadow-lg"
-                          onClick={handlePaymentSubmit}
-                          disabled={
-                            !bookingData.cardName ||
-                            !bookingData.cardNumber ||
-                            !bookingData.expiryDate ||
-                            !bookingData.cvv
-                          }
+                          onClick={handleAppointmentBooking}
                         >
                           <CreditCard className="w-5 h-5 mr-2" />
-                          Pay ₹{mockDoctor.fee}
+                          Pay ₹{doctor.consultation_fee}
                         </Button>
                       </div>
                     </div>
@@ -748,7 +746,7 @@ export default function BookAppointment() {
                 </h2>
                 <p className="text-xl text-gray-600 mb-8">
                   Your appointment has been confirmed and payment of ₹
-                  {mockDoctor.fee} has been processed.
+                  {doctor.consultation_fee} has been processed.
                 </p>
 
                 <div className="bg-gradient-to-r from-[#1656a4]/10 to-blue-50 p-6 rounded-xl mb-8">
@@ -758,11 +756,11 @@ export default function BookAppointment() {
                   <div className="grid md:grid-cols-2 gap-4 text-left">
                     <div>
                       <p className="text-sm text-gray-600">Doctor</p>
-                      <p className="font-semibold">{mockDoctor.name}</p>
+                      <p className="font-semibold">{doctor.user_name}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Specialty</p>
-                      <p className="font-semibold">{mockDoctor.specialty}</p>
+                      <p className="font-semibold">{doctor.specialty}</p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Date</p>
@@ -776,12 +774,14 @@ export default function BookAppointment() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Patient</p>
-                      <p className="font-semibold">{bookingData.patientName}</p>
+                      <p className="font-semibold">
+                        {bookingData.patient_name}
+                      </p>
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Amount Paid</p>
                       <p className="font-semibold text-green-600">
-                        ₹{mockDoctor.fee}
+                        ₹{doctor.consultation_fee}
                       </p>
                     </div>
                   </div>
@@ -792,7 +792,7 @@ export default function BookAppointment() {
                     📧 Confirmation email sent to your registered email address
                   </p>
                   <p className="text-sm text-blue-800 mt-1">
-                    📱 SMS confirmation sent to {bookingData.patientPhone}
+                    📱 SMS confirmation sent to {bookingData.patient_phone}
                   </p>
                 </div>
 

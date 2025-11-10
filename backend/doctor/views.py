@@ -2,7 +2,7 @@
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.mail import send_mail
 from django.conf import settings
 import logging
@@ -14,18 +14,14 @@ from .serializers import DoctorProfileSerializer, DoctorCreateSerializer
 logger = logging.getLogger(__name__)
 
 class DoctorListView(APIView):
-    permission_classes = [IsAuthenticated]
-    
+    # Allow public access to list doctors (used by customer browsing). Creation
+    # of doctors is handled in DoctorCreateView and remains admin-only.
+    permission_classes = [AllowAny]
+
     def get(self, request):
-        if request.user.role != 'admin':
-            return Response({
-                'success': False,
-                'message': 'Permission denied'
-            }, status=status.HTTP_403_FORBIDDEN)
-        
         doctors = DoctorProfile.objects.select_related('user').all()
         serializer = DoctorProfileSerializer(doctors, many=True)
-        
+
         return Response({
             'success': True,
             'doctors': serializer.data
@@ -104,16 +100,46 @@ class DoctorProfileView(APIView):
         try:
             doctor_profile = DoctorProfile.objects.get(user=request.user)
             serializer = DoctorProfileSerializer(doctor_profile)
-            
+
             return Response({
                 'success': True,
                 'profile': serializer.data
             })
         except DoctorProfile.DoesNotExist:
-            return Response({
-                'success': False,
-                'message': 'Doctor profile not found'
-            }, status=status.HTTP_404_NOT_FOUND)
+            # If a doctor user exists but doesn't yet have a DoctorProfile,
+            # create a placeholder profile so the frontend can show the
+            # profile editing UI and persist details on first save.
+            try:
+                # Generate a unique doctor_id similar to DoctorCreateSerializer
+                last = DoctorProfile.objects.exclude(doctor_id__isnull=True).order_by('-id').first()
+                if last and last.doctor_id and last.doctor_id.startswith('DOC'):
+                    try:
+                        num = int(last.doctor_id.replace('DOC', '')) + 1
+                    except Exception:
+                        num = DoctorProfile.objects.count() + 1
+                else:
+                    num = DoctorProfile.objects.count() + 1
+
+                doctor_id = f"DOC{num:03d}"
+
+                doctor_profile = DoctorProfile.objects.create(
+                    user=request.user,
+                    doctor_id=doctor_id,
+                    available_days=[],
+                    available_time_slots=[],
+                    bio=''
+                )
+
+                serializer = DoctorProfileSerializer(doctor_profile)
+                return Response({
+                    'success': True,
+                    'profile': serializer.data
+                })
+            except Exception:
+                return Response({
+                    'success': False,
+                    'message': 'Doctor profile not found'
+                }, status=status.HTTP_404_NOT_FOUND)
     
     def put(self, request):
         if request.user.role != 'doctor':
@@ -127,16 +153,37 @@ class DoctorProfileView(APIView):
             serializer = DoctorProfileSerializer(doctor_profile, data=request.data, partial=True)
             
             if serializer.is_valid():
-                # Mark profile as complete if all required fields are present
-                required_fields = ['specialty', 'experience', 'qualification', 'bio', 'available_days', 'available_time_slots']
-                if all(getattr(doctor_profile, field) for field in required_fields):
-                    serializer.validated_data['is_profile_complete'] = True
-                
                 serializer.save()
+                
+                # ✅ CORRECT: Check if all required fields have non-empty values
+                updated_profile = DoctorProfile.objects.get(user=request.user)
+                required_fields = ['specialty', 'experience', 'qualification', 'bio']
+                
+                # Check if all required fields have values
+                has_all_fields = all(
+                    getattr(updated_profile, field) and 
+                    len(str(getattr(updated_profile, field)).strip()) > 0 
+                    for field in required_fields
+                )
+                
+                # Check if availability is set
+                has_availability = (
+                    updated_profile.available_days and 
+                    len(updated_profile.available_days) > 0 and
+                    updated_profile.available_time_slots and 
+                    len(updated_profile.available_time_slots) > 0
+                )
+                
+                # Update completion status
+                is_complete = has_all_fields and has_availability
+                if is_complete != updated_profile.is_profile_complete:
+                    updated_profile.is_profile_complete = is_complete
+                    updated_profile.save()
+                
                 return Response({
                     'success': True,
                     'message': 'Profile updated successfully',
-                    'profile': serializer.data
+                    'profile': DoctorProfileSerializer(updated_profile).data
                 })
             
             return Response({

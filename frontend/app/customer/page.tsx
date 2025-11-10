@@ -19,61 +19,119 @@ import {
   FileText,
   LogOut,
   Settings,
+  Loader2,
 } from "lucide-react";
+import api from "@/lib/api";
 
-// Mock data
-const mockAppointments = [
-  {
-    id: 1,
-    doctor: "Dr. Sarah Johnson",
-    specialty: "Cardiology",
-    date: "2024-12-25",
-    time: "2:00 PM",
-    status: "confirmed",
-    reason: "Regular checkup",
-  },
-  {
-    id: 2,
-    doctor: "Dr. Michael Chen",
-    specialty: "Dermatology",
-    date: "2024-12-20",
-    time: "10:00 AM",
-    status: "completed",
-    reason: "Skin consultation",
-  },
-];
+interface Appointment {
+  id: number;
+  appointment_id: string;
+  doctor_name: string;
+  doctor_specialty: string;
+  appointment_date: string;
+  appointment_time: string;
+  status: string;
+  reason: string;
+  consultation_fee: string;
+}
 
-const mockPrescriptions = [
-  {
-    id: 1,
-    doctor: "Dr. Michael Chen",
-    date: "2024-12-20",
-    medications: ["Antibiotic cream", "Moisturizer"],
-    instructions: "Apply twice daily for 7 days",
-  },
-];
+interface Prescription {
+  id: number;
+  doctor_name: string;
+  appointment_date: string;
+  medications: string[];
+  instructions: string;
+  diagnosis: string;
+}
 
 export default function CustomerDashboard() {
   const router = useRouter();
   const [userEmail, setUserEmail] = useState("");
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const role = localStorage.getItem("userRole");
     const email = localStorage.getItem("userEmail");
+    const token = localStorage.getItem("token");
 
-    if (role !== "customer") {
-      router.push("/auth");
+    if (role !== "customer" || !token) {
+      router.push("/");
       return;
     }
 
     setUserEmail(email || "");
+    fetchDashboardData(token);
   }, [router]);
+
+  const fetchDashboardData = async (token: string) => {
+    try {
+      setLoading(true);
+
+      const [appointmentsRes, prescriptionsRes] = await Promise.all([
+        fetch(api(`/api/appointments/appointments/`), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }),
+        fetch(api(`/api/appointments/prescriptions/`), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }),
+      ]);
+
+      if (appointmentsRes.ok) {
+        const appointmentsData = await appointmentsRes.json();
+        setAppointments(appointmentsData.appointments || []);
+      }
+
+      if (prescriptionsRes.ok) {
+        const prescriptionsData = await prescriptionsRes.json();
+        setPrescriptions(prescriptionsData.prescriptions || []);
+      }
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("userRole");
     localStorage.removeItem("userEmail");
+    localStorage.removeItem("token");
     router.push("/");
   };
+
+  const getStatusVariant = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return "default";
+      case "completed":
+        return "secondary";
+      case "pending":
+        return "outline";
+      case "cancelled":
+        return "destructive";
+      default:
+        return "outline";
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-[#1656a4]" />
+          <p className="text-gray-600">Loading your dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -208,97 +266,146 @@ export default function CustomerDashboard() {
 
           <TabsContent value="appointments" className="space-y-4">
             <div className="grid gap-4">
-              {mockAppointments.map((appointment) => (
-                <Card key={appointment.id}>
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-start gap-3 sm:gap-4">
-                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#1656a4]/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-[#1656a4]" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-sm sm:text-base">
-                            {appointment.doctor}
-                          </h3>
-                          <p className="text-xs sm:text-sm text-gray-600">
-                            {appointment.specialty}
-                          </p>
-                          <p className="text-xs sm:text-sm text-gray-500">
-                            {appointment.reason}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="text-left sm:text-right">
-                        <p className="font-medium text-sm sm:text-base">
-                          {appointment.date}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-600">
-                          {appointment.time}
-                        </p>
-                        <Badge
-                          variant={
-                            appointment.status === "confirmed"
-                              ? "default"
-                              : "secondary"
-                          }
-                          className="mt-2"
-                        >
-                          {appointment.status}
-                        </Badge>
-                      </div>
-                    </div>
+              {appointments.length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      No Appointments Found
+                    </h3>
+                    <p className="text-gray-600 mb-4">
+                      You haven't booked any appointments yet.
+                    </p>
+                    <Link href="/customer/browse">
+                      <Button className="bg-[#1656a4] hover:bg-[#1656a4]/90">
+                        Find Doctors
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                appointments.map((appointment) => (
+                  <Card key={appointment.id}>
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-start gap-3 sm:gap-4">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-[#1656a4]/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-[#1656a4]" />
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-sm sm:text-base">
+                              {appointment.doctor_name}
+                            </h3>
+                            <p className="text-xs sm:text-sm text-gray-600">
+                              {appointment.doctor_specialty}
+                            </p>
+                            <p className="text-xs sm:text-sm text-gray-500">
+                              {appointment.reason}
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              ID: {appointment.appointment_id}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-left sm:text-right">
+                          <p className="font-medium text-sm sm:text-base">
+                            {new Date(
+                              appointment.appointment_date
+                            ).toLocaleDateString()}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-600">
+                            {appointment.appointment_time}
+                          </p>
+                          <Badge
+                            variant={getStatusVariant(appointment.status)}
+                            className="mt-2 capitalize"
+                          >
+                            {appointment.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="prescriptions" className="space-y-4">
             <div className="grid gap-4">
-              {mockPrescriptions.map((prescription) => (
-                <Card key={prescription.id}>
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-sm sm:text-base">
-                          {prescription.doctor}
-                        </h3>
-                        <p className="text-xs sm:text-sm text-gray-600 mb-3">
-                          {prescription.date}
-                        </p>
-
-                        <div className="space-y-2">
-                          <h4 className="font-medium text-sm">Medications:</h4>
-                          <ul className="list-disc list-inside text-xs sm:text-sm text-gray-600">
-                            {prescription.medications.map((med, index) => (
-                              <li key={index}>{med}</li>
-                            ))}
-                          </ul>
-
-                          <h4 className="font-medium text-sm mt-3">
-                            Instructions:
-                          </h4>
-                          <p className="text-xs sm:text-sm text-gray-600">
-                            {prescription.instructions}
-                          </p>
-                        </div>
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="self-start bg-transparent"
-                      >
-                        Download
-                      </Button>
-                    </div>
+              {prescriptions.length === 0 ? (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      No Prescriptions Found
+                    </h3>
+                    <p className="text-gray-600">
+                      Your prescriptions will appear here after consultations.
+                    </p>
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                prescriptions.map((prescription) => (
+                  <Card key={prescription.id}>
+                    <CardContent className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-sm sm:text-base">
+                            {prescription.doctor_name}
+                          </h3>
+                          <p className="text-xs sm:text-sm text-gray-600 mb-3">
+                            {new Date(
+                              prescription.appointment_date
+                            ).toLocaleDateString()}
+                          </p>
+
+                          {prescription.diagnosis && (
+                            <div className="mb-3">
+                              <h4 className="font-medium text-sm">
+                                Diagnosis:
+                              </h4>
+                              <p className="text-xs sm:text-sm text-gray-600">
+                                {prescription.diagnosis}
+                              </p>
+                            </div>
+                          )}
+
+                          <div className="space-y-2">
+                            <h4 className="font-medium text-sm">
+                              Medications:
+                            </h4>
+                            <ul className="list-disc list-inside text-xs sm:text-sm text-gray-600">
+                              {prescription.medications.map((med, index) => (
+                                <li key={index}>{med}</li>
+                              ))}
+                            </ul>
+
+                            <h4 className="font-medium text-sm mt-3">
+                              Instructions:
+                            </h4>
+                            <p className="text-xs sm:text-sm text-gray-600">
+                              {prescription.instructions}
+                            </p>
+                          </div>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="self-start bg-transparent"
+                        >
+                          Download
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           </TabsContent>
 
