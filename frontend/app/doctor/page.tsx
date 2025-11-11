@@ -4,49 +4,52 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { AlertCircle } from "lucide-react";
-import { Calendar, User, FileText, Clock } from "lucide-react";
+import {
+  AlertCircle,
+  Calendar,
+  User,
+  FileText,
+  Clock,
+  Loader2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
-// Mock data
-const mockAppointments = [
-  {
-    id: 1,
-    patient: "John Doe",
-    age: 35,
-    gender: "Male",
-    phone: "+91 98765 43210",
-    date: "2024-12-25",
-    time: "2:00 PM",
-    reason: "Regular checkup",
-    symptoms: "Chest pain, shortness of breath",
-    status: "confirmed",
-  },
-  {
-    id: 2,
-    patient: "Jane Smith",
-    age: 28,
-    gender: "Female",
-    phone: "+91 98765 43211",
-    date: "2024-12-25",
-    time: "3:00 PM",
-    reason: "Follow-up consultation",
-    symptoms: "Persistent cough",
-    status: "confirmed",
-  },
-];
+interface Appointment {
+  id: number;
+  appointment_id: string;
+  patient_name: string;
+  patient_age: number;
+  patient_gender: string;
+  patient_phone: string;
+  appointment_date: string;
+  appointment_time: string;
+  reason: string;
+  symptoms: string;
+  status: string;
+  consultation_fee: string;
+}
 
 export default function DoctorDashboardPage() {
+  const router = useRouter();
   const [doctorProfile, setDoctorProfile] = useState<any>(null);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    todayAppointments: 0,
+    completedToday: 0,
+    totalPrescriptions: 0,
+  });
 
   useEffect(() => {
     fetchDoctorProfile();
+    fetchTodayAppointments();
   }, []);
 
   const fetchDoctorProfile = async () => {
     try {
       const token = localStorage.getItem("token");
-
       const response = await fetch(api(`/api/doctor/doctor/profile/`), {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -64,9 +67,74 @@ export default function DoctorDashboardPage() {
     }
   };
 
-  const todayAppointments = mockAppointments.filter(
-    (apt) => apt.date === "2024-12-25"
-  );
+  const fetchTodayAppointments = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+      const today = new Date().toISOString().split("T")[0];
+
+      const response = await fetch(
+        api(`/api/appointment/appointments/?date=${today}&status=confirmed`),
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setAppointments(data.appointments || []);
+          // Calculate stats
+          const todayApps = data.appointments || [];
+          const completed = todayApps.filter(
+            (apt: Appointment) => apt.status === "completed"
+          ).length;
+
+          setStats({
+            todayAppointments: todayApps.length,
+            completedToday: completed,
+            totalPrescriptions: 0, // You might want to fetch this separately
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching appointments:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddPrescription = (appointmentId: number) => {
+    router.push(`/doctor/prescription/create?appointment=${appointmentId}`);
+  };
+
+  const getNextAppointmentTime = () => {
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+    const currentTime = now.toTimeString().split(" ")[0];
+
+    const upcoming = appointments
+      .filter(
+        (apt) =>
+          apt.appointment_date === today && apt.appointment_time > currentTime
+      )
+      .sort((a, b) => a.appointment_time.localeCompare(b.appointment_time))[0];
+
+    return upcoming ? upcoming.appointment_time : "No more appointments";
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-[#1656a4]" />
+          <p className="text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -90,7 +158,7 @@ export default function DoctorDashboardPage() {
                 <Calendar className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{todayAppointments.length}</p>
+                <p className="text-2xl font-bold">{stats.todayAppointments}</p>
                 <p className="text-sm text-gray-600">Today's Appointments</p>
               </div>
             </div>
@@ -104,7 +172,7 @@ export default function DoctorDashboardPage() {
                 <User className="w-6 h-6 text-green-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">5</p>
+                <p className="text-2xl font-bold">{stats.completedToday}</p>
                 <p className="text-sm text-gray-600">Completed Today</p>
               </div>
             </div>
@@ -118,7 +186,7 @@ export default function DoctorDashboardPage() {
                 <FileText className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">12</p>
+                <p className="text-2xl font-bold">{stats.totalPrescriptions}</p>
                 <p className="text-sm text-gray-600">Prescriptions</p>
               </div>
             </div>
@@ -132,7 +200,9 @@ export default function DoctorDashboardPage() {
                 <Clock className="w-6 h-6 text-orange-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">2:00 PM</p>
+                <p className="text-base font-semibold">
+                  {getNextAppointmentTime()}
+                </p>
                 <p className="text-sm text-gray-600">Next Appointment</p>
               </div>
             </div>
@@ -147,41 +217,69 @@ export default function DoctorDashboardPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {todayAppointments.map((appointment) => (
-              <div
-                key={appointment.id}
-                className="flex items-center justify-between p-4 border rounded-lg"
-              >
-                <div className="flex items-center gap-4">
-                  <Avatar className="w-10 h-10">
-                    <AvatarFallback>
-                      {appointment.patient
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">{appointment.patient}</p>
-                    <p className="text-sm text-gray-600">
-                      {appointment.reason}
+            {appointments.length === 0 ? (
+              <div className="text-center py-8">
+                <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600">No appointments for today</p>
+              </div>
+            ) : (
+              appointments.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  className="flex items-center justify-between p-4 border rounded-lg"
+                >
+                  <div className="flex items-center gap-4">
+                    <Avatar className="w-10 h-10">
+                      <AvatarFallback>
+                        {appointment.patient_name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="font-semibold">
+                        {appointment.patient_name}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        {appointment.reason}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Age: {appointment.patient_age} •{" "}
+                        {appointment.patient_gender}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-medium">
+                      {appointment.appointment_time}
                     </p>
+                    <Badge
+                      variant={
+                        appointment.status === "confirmed"
+                          ? "default"
+                          : appointment.status === "completed"
+                          ? "secondary"
+                          : "outline"
+                      }
+                      className="mb-2"
+                    >
+                      {appointment.status}
+                    </Badge>
+                    <div>
+                      <Button
+                        size="sm"
+                        onClick={() => handleAddPrescription(appointment.id)}
+                        disabled={appointment.status === "completed"}
+                      >
+                        <FileText className="w-4 h-4 mr-2" />
+                        Add Prescription
+                      </Button>
+                    </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium">{appointment.time}</p>
-                  <Badge
-                    variant={
-                      appointment.status === "confirmed"
-                        ? "default"
-                        : "secondary"
-                    }
-                  >
-                    {appointment.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </CardContent>
       </Card>

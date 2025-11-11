@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import authenticate
 from .models import User, OTP
 from doctor.models import DoctorProfile
+from .models import CustomerProfile
 
 class UserSerializer(serializers.ModelSerializer):
     is_profile_complete = serializers.SerializerMethodField(read_only=True)
@@ -26,6 +27,13 @@ class UserSerializer(serializers.ModelSerializer):
             except DoctorProfile.DoesNotExist:
                 return None
         return None
+
+
+class CustomerProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerProfile
+        fields = ('date_of_birth', 'gender', 'blood_group', 'address')
+        read_only_fields = ()
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)

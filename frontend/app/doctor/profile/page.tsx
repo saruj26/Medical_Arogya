@@ -78,8 +78,25 @@ export default function DoctorProfilePage() {
         const data = await response.json();
         if (data.success) {
           setDoctorProfile(data.profile);
+          // Map backend specialty labels (Title Case) to the Select item's keys
+          const rawSpecialty = (data.profile.specialty || "")
+            .toString()
+            .toLowerCase();
+          let specialtyKey = "";
+          if (rawSpecialty) {
+            if (rawSpecialty.includes("cardio")) specialtyKey = "cardiology";
+            else if (rawSpecialty.includes("derma"))
+              specialtyKey = "dermatology";
+            else if (rawSpecialty.includes("pedi")) specialtyKey = "pediatrics";
+            else if (rawSpecialty.includes("ortho"))
+              specialtyKey = "orthopedics";
+            else if (rawSpecialty.includes("neuro")) specialtyKey = "neurology";
+            else if (rawSpecialty.includes("general")) specialtyKey = "general";
+            else specialtyKey = rawSpecialty; // fallback
+          }
+
           setProfileForm({
-            specialty: data.profile.specialty || "",
+            specialty: specialtyKey,
             experience: data.profile.experience || "",
             qualification: data.profile.qualification || "",
             license_number: data.profile.license_number || "",

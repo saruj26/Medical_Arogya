@@ -5,14 +5,15 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.contrib.auth import login
 from django.utils import timezone
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import User, OTP
+from .models import User, OTP, CustomerProfile
 from .serializers import (
     UserSerializer,
     UserRegisterSerializer,
     UserLoginSerializer,
     ForgotPasswordSerializer,
     VerifyOTPSerializer,
-    ResetPasswordSerializer
+    ResetPasswordSerializer,
+    CustomerProfileSerializer,
 )
 
 class RegisterView(APIView):
@@ -151,31 +152,66 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = UserSerializer(request.user)
+        user_serializer = UserSerializer(request.user)
+        user_data = user_serializer.data
+
+        # attach customer profile fields into the returned user object
+        try:
+            profile = CustomerProfile.objects.get(user=request.user)
+            profile_data = CustomerProfileSerializer(profile).data
+            # merge profile fields into user_data for backward compatibility
+            user_data.update(profile_data)
+        except CustomerProfile.DoesNotExist:
+            # no profile yet - return user data without profile fields
+            pass
+
         return Response({
             'success': True,
-            'user': serializer.data
+            'user': user_data
         }, status=status.HTTP_200_OK)
 
     def put(self, request):
-        serializer = UserSerializer(
-            request.user, 
-            data=request.data, 
-            partial=True
-        )
-        if serializer.is_valid():
-            serializer.save()
+        # Separate user fields and customer profile fields
+        user_fields = {k: v for k, v in request.data.items() if k in ('name', 'phone')}
+        profile_fields = {k: v for k, v in request.data.items() if k in ('date_of_birth', 'gender', 'blood_group', 'address')}
+        user_serializer = UserSerializer(request.user, data=user_fields, partial=True)
+        if not user_serializer.is_valid():
             return Response({
-                'success': True,
-                'message': 'Profile updated successfully',
-                'user': serializer.data
-            }, status=status.HTTP_200_OK)
-        
+                'success': False,
+                'message': 'Profile update failed',
+                'errors': user_serializer.errors
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        # save user fields
+        user_serializer.save()
+
+        # update or create customer profile using the serializer (validation + conversion)
+        if profile_fields:
+            profile, created = CustomerProfile.objects.get_or_create(user=request.user)
+            # Use serializer to validate and save partial updates
+            profile_serializer = CustomerProfileSerializer(profile, data=profile_fields, partial=True)
+            if not profile_serializer.is_valid():
+                return Response({
+                    'success': False,
+                    'message': 'Profile update failed',
+                    'errors': profile_serializer.errors
+                }, status=status.HTTP_400_BAD_REQUEST)
+            profile_serializer.save()
+
+        # return merged user + profile data like GET
+        user_data = UserSerializer(request.user).data
+        try:
+            profile = CustomerProfile.objects.get(user=request.user)
+            profile_data = CustomerProfileSerializer(profile).data
+            user_data.update(profile_data)
+        except CustomerProfile.DoesNotExist:
+            pass
+
         return Response({
-            'success': False,
-            'message': 'Profile update failed',
-            'errors': serializer.errors
-        }, status=status.HTTP_400_BAD_REQUEST)
+            'success': True,
+            'message': 'Profile updated successfully',
+            'user': user_data
+        }, status=status.HTTP_200_OK)
 
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]

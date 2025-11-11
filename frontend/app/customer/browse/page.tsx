@@ -129,6 +129,9 @@ export default function BrowseDoctors() {
       });
     }
 
+    // Only show doctors whose profile is complete to customers
+    filtered = filtered.filter((doctor) => doctor.is_profile_complete);
+
     setFilteredDoctors(filtered);
   }, [selectedDate, selectedSpecialty, doctors, searchQuery]);
 
@@ -143,8 +146,11 @@ export default function BrowseDoctors() {
   const getDoctorsByDate = (dateISO: string) => {
     if (!dateISO) return doctors;
     const weekday = weekdayForISO(dateISO);
-    return doctors.filter((d) =>
-      (d.available_days || []).some((day) => normalizeDay(day) === weekday)
+    // Only include doctors with complete profiles and matching weekday
+    return doctors.filter(
+      (d) =>
+        d.is_profile_complete &&
+        (d.available_days || []).some((day) => normalizeDay(day) === weekday)
     );
   };
 

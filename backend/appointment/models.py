@@ -26,9 +26,11 @@ class Appointment(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     consultation_fee = models.DecimalField(max_digits=10, decimal_places=2)
     payment_status = models.BooleanField(default=False)
-    # payment_method: e.g. 'atm', 'cash_on_arrival', 'upi', etc.
     payment_method = models.CharField(max_length=50, blank=True, default="")
     payment_id = models.CharField(max_length=100, blank=True)
+    company_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    refund_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    refunded = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -49,13 +51,23 @@ class Appointment(models.Model):
         super().save(*args, **kwargs)
 
 class Prescription(models.Model):
-    appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE, related_name='prescription')
+    appointment = models.OneToOneField(
+        Appointment, 
+        on_delete=models.CASCADE, 
+        related_name='prescription'
+    )
     doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE)
     patient = models.ForeignKey(User, on_delete=models.CASCADE)
-    medications = models.JSONField(default=list)
+    medications = models.JSONField(default=list)  # Store as list of objects: [{"name": "", "dosage": "", "duration": ""}]
     instructions = models.TextField()
     diagnosis = models.TextField(blank=True)
+    notes = models.TextField(blank=True)  # Additional notes from doctor
+    follow_up_date = models.DateField(null=True, blank=True)  # Optional follow-up date
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Prescription for {self.patient.name} - {self.appointment.appointment_id}"
+
+    class Meta:
+        ordering = ['-created_at']
