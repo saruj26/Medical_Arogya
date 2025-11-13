@@ -10,6 +10,8 @@ import logging
 from core.models import User
 from .models import DoctorProfile
 from .serializers import DoctorProfileSerializer, DoctorCreateSerializer
+from .models import DoctorTip
+from .serializers_tips import DoctorTipSerializer, DoctorTipCreateSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -197,3 +199,109 @@ class DoctorProfileView(APIView):
                 'success': False,
                 'message': 'Doctor profile not found'
             }, status=status.HTTP_404_NOT_FOUND)
+
+
+class DoctorTipsListCreateView(APIView):
+    """GET: list published tips (public).
+       POST: create a new tip (doctor only).
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # If the authenticated doctor requests their own tips (mine=1), return
+        # all tips authored by them (including unpublished). Otherwise return
+        # only published tips for public consumption.
+        mine = request.query_params.get('mine')
+        if mine and request.user.is_authenticated and getattr(request.user, 'role', None) == 'doctor':
+            try:
+                doctor_profile = DoctorProfile.objects.get(user=request.user)
+                tips = DoctorTip.objects.filter(doctor=doctor_profile).select_related('doctor__user')
+            except DoctorProfile.DoesNotExist:
+                return Response({'success': False, 'message': 'Doctor profile not found'}, status=status.HTTP_404_NOT_FOUND)
+        else:
+            tips = DoctorTip.objects.filter(is_published=True).select_related('doctor__user')
+
+        serializer = DoctorTipSerializer(tips, many=True)
+        return Response({'success': True, 'tips': serializer.data})
+
+    def post(self, request):
+        # Only authenticated doctors may create tips
+        try:
+            if not request.user.is_authenticated or getattr(request.user, 'role', None) != 'doctor':
+                return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+            try:
+                doctor_profile = DoctorProfile.objects.get(user=request.user)
+            except DoctorProfile.DoesNotExist:
+                return Response({'success': False, 'message': 'Doctor profile not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            serializer = DoctorTipCreateSerializer(data=request.data, context={'doctor': doctor_profile})
+            if serializer.is_valid():
+                tip = serializer.save()
+                return Response({'success': True, 'tip': DoctorTipSerializer(tip).data}, status=status.HTTP_201_CREATED)
+
+            return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            # Catch unexpected server errors and return JSON so the frontend
+            # doesn't try to parse an HTML error page. Log the exception.
+            logger.exception("Unhandled error creating DoctorTip")
+            # For debugging (local/dev), include the exception message when DEBUG is on.
+            resp = {'success': False, 'message': 'Internal server error while creating tip'}
+            if getattr(settings, 'DEBUG', False):
+                try:
+                    resp['error'] = str(e)
+                except Exception:
+                    resp['error'] = 'Error serializing exception'
+            return Response(resp, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class DoctorTipDetailView(APIView):
+    permission_classes = [AllowAny]
+
+    def get_object(self, pk):
+        try:
+            return DoctorTip.objects.select_related('doctor__user').get(pk=pk)
+        except DoctorTip.DoesNotExist:
+            return None
+
+    def get(self, request, pk):
+        tip = self.get_object(pk)
+        if not tip or (not tip.is_published and (not request.user.is_authenticated or request.user.role != 'doctor' or tip.doctor.user != request.user)):
+            return Response({'success': False, 'message': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Increment views for public hits
+        try:
+            tip.views = (tip.views or 0) + 1
+            tip.save()
+        except Exception:
+            pass
+
+        serializer = DoctorTipSerializer(tip)
+        return Response({'success': True, 'tip': serializer.data})
+
+    def put(self, request, pk):
+        # Only author doctor may update
+        tip = self.get_object(pk)
+        if not tip:
+            return Response({'success': False, 'message': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not request.user.is_authenticated or request.user.role != 'doctor' or tip.doctor.user != request.user:
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = DoctorTipCreateSerializer(tip, data=request.data, partial=True, context={'doctor': tip.doctor})
+        if serializer.is_valid():
+            updated = serializer.save()
+            return Response({'success': True, 'tip': DoctorTipSerializer(updated).data})
+
+        return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, pk):
+        tip = self.get_object(pk)
+        if not tip:
+            return Response({'success': False, 'message': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if not request.user.is_authenticated or request.user.role != 'doctor' or tip.doctor.user != request.user:
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        tip.delete()
+        return Response({'success': True, 'message': 'Tip deleted'})

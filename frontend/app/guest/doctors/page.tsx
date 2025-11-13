@@ -283,7 +283,7 @@ export default function GuestDoctorsPage() {
                             Consultation Fee
                           </p>
                           <p className="text-2xl font-bold text-green-600">
-                            ₹{doctor.fee}
+                            Rs {doctor.fee}
                           </p>
                         </div>
 

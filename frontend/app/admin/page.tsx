@@ -97,7 +97,7 @@ export default function AdminDashboard() {
                 <DollarSign className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <p className="text-2xl font-bold">₹{totalRevenue}</p>
+                <p className="text-2xl font-bold">Rs {totalRevenue}</p>
                 <p className="text-sm text-gray-600">Total Revenue</p>
               </div>
             </div>

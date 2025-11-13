@@ -1,82 +1,134 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Eye, EyeOff, Shield, CheckCircle, AlertCircle } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Eye, EyeOff, Shield, CheckCircle, AlertCircle } from "lucide-react";
+import api from "@/lib/api";
 
 interface ChangePasswordProps {
-  userRole?: string
-  onSuccess?: () => void
+  userRole?: string;
+  onSuccess?: () => void;
 }
 
-export function ChangePassword({ userRole = "customer", onSuccess }: ChangePasswordProps) {
+export function ChangePassword({
+  userRole = "customer",
+  onSuccess,
+}: ChangePasswordProps) {
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
     confirm: false,
-  })
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-  })
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError("")
-    setSuccess("")
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+    setSuccess("");
 
     // Validation
     if (formData.newPassword !== formData.confirmPassword) {
-      setError("New passwords don't match")
-      setIsLoading(false)
-      return
+      setError("New passwords don't match");
+      setIsLoading(false);
+      return;
     }
 
     if (formData.newPassword.length < 6) {
-      setError("Password must be at least 6 characters long")
-      setIsLoading(false)
-      return
+      setError("Password must be at least 6 characters long");
+      setIsLoading(false);
+      return;
     }
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 2000))
+    try {
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      if (!token) {
+        setError("Not authenticated");
+        setIsLoading(false);
+        return;
+      }
 
-    // Demo validation - current password should be "password123"
-    if (formData.currentPassword !== "password123") {
-      setError("Current password is incorrect")
-      setIsLoading(false)
-      return
+  const res = await fetch(api("/api/auth/change-password/"), {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          current_password: formData.currentPassword,
+          new_password: formData.newPassword,
+          confirm_password: formData.confirmPassword,
+        }),
+      });
+
+      // Robustly handle JSON and non-JSON responses so the UI shows a useful message
+      const text = await res.text();
+      let data: any = {
+        success: false,
+        message: "Invalid response from server",
+      };
+      try {
+        data = text ? JSON.parse(text) : data;
+      } catch (e) {
+        // keep data as fallback and include server text in console for debugging
+        console.error(
+          "Non-JSON response from change-password:",
+          res.status,
+          text
+        );
+        data = {
+          success: false,
+          message: text || "Invalid response from server",
+        };
+      }
+
+      if (res.ok && data.success) {
+        setSuccess(data.message || "Password changed successfully!");
+        setFormData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+        if (onSuccess) setTimeout(onSuccess, 1000);
+      } else {
+        setError(
+          data.message || `Failed to change password (status ${res.status})`
+        );
+      }
+    } catch (err) {
+      setError("Failed to change password");
+      console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-
-    setSuccess("Password changed successfully!")
-    setFormData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    })
-    setIsLoading(false)
-
-    if (onSuccess) {
-      setTimeout(onSuccess, 2000)
-    }
-  }
+  };
 
   const togglePasswordVisibility = (field: "current" | "new" | "confirm") => {
     setShowPasswords((prev) => ({
       ...prev,
       [field]: !prev[field],
-    }))
-  }
+    }));
+  };
 
   return (
     <Card className="border-2 border-[#1656a4]/20 shadow-xl">
@@ -85,7 +137,9 @@ export function ChangePassword({ userRole = "customer", onSuccess }: ChangePassw
           <Shield className="w-5 h-5" />
           Change Password
         </CardTitle>
-        <CardDescription className="text-blue-100">Update your password to keep your account secure</CardDescription>
+        <CardDescription className="text-blue-100">
+          Update your password to keep your account secure
+        </CardDescription>
       </CardHeader>
       <CardContent className="p-6">
         {error && (
@@ -113,7 +167,9 @@ export function ChangePassword({ userRole = "customer", onSuccess }: ChangePassw
                 type={showPasswords.current ? "text" : "password"}
                 placeholder="Enter current password"
                 value={formData.currentPassword}
-                onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, currentPassword: e.target.value })
+                }
                 className="h-10 pr-10"
                 required
               />
@@ -124,7 +180,11 @@ export function ChangePassword({ userRole = "customer", onSuccess }: ChangePassw
                 className="absolute right-0 top-0 h-10 px-3"
                 onClick={() => togglePasswordVisibility("current")}
               >
-                {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPasswords.current ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -139,7 +199,9 @@ export function ChangePassword({ userRole = "customer", onSuccess }: ChangePassw
                 type={showPasswords.new ? "text" : "password"}
                 placeholder="Enter new password"
                 value={formData.newPassword}
-                onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, newPassword: e.target.value })
+                }
                 className="h-10 pr-10"
                 required
               />
@@ -150,7 +212,11 @@ export function ChangePassword({ userRole = "customer", onSuccess }: ChangePassw
                 className="absolute right-0 top-0 h-10 px-3"
                 onClick={() => togglePasswordVisibility("new")}
               >
-                {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPasswords.new ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -165,7 +231,9 @@ export function ChangePassword({ userRole = "customer", onSuccess }: ChangePassw
                 type={showPasswords.confirm ? "text" : "password"}
                 placeholder="Confirm new password"
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, confirmPassword: e.target.value })
+                }
                 className="h-10 pr-10"
                 required
               />
@@ -176,13 +244,19 @@ export function ChangePassword({ userRole = "customer", onSuccess }: ChangePassw
                 className="absolute right-0 top-0 h-10 px-3"
                 onClick={() => togglePasswordVisibility("confirm")}
               >
-                {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                {showPasswords.confirm ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
 
           <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-            <h4 className="font-medium text-blue-800 mb-2 text-sm">Password Requirements:</h4>
+            <h4 className="font-medium text-blue-800 mb-2 text-sm">
+              Password Requirements:
+            </h4>
             <ul className="text-xs text-blue-700 space-y-1">
               <li>• At least 6 characters long</li>
               <li>• Mix of letters and numbers recommended</li>
@@ -190,13 +264,11 @@ export function ChangePassword({ userRole = "customer", onSuccess }: ChangePassw
             </ul>
           </div>
 
-          <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
-            <p className="text-xs text-yellow-800">
-              <strong>Demo:</strong> Current password is "password123"
-            </p>
-          </div>
-
-          <Button type="submit" className="w-full bg-[#1656a4] hover:bg-[#1656a4]/90 h-10" disabled={isLoading}>
+          <Button
+            type="submit"
+            className="w-full bg-[#1656a4] hover:bg-[#1656a4]/90 h-10"
+            disabled={isLoading}
+          >
             {isLoading ? (
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -209,5 +281,5 @@ export function ChangePassword({ userRole = "customer", onSuccess }: ChangePassw
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }

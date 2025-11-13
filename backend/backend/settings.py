@@ -25,6 +25,9 @@ DEBUG = os.getenv('DEBUG', 'True') == 'True'
 USE_SQLITE = os.getenv('USE_SQLITE', 'False') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+
+GOOGLE_AI_KEY='AIzaSyDiOw9nk8x9heOv8vMi9blbbIuiAcLpQWU'
+
 #Email settings
 # Email
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -103,6 +106,7 @@ INSTALLED_APPS = [
     # Local apps
     'core',
     'doctor',
+    'chat',
     'appointment',
     ]
 

@@ -14,6 +14,7 @@ import {
   Home,
   CalendarDays,
   User,
+  FileText,
 } from "lucide-react";
 
 export default function DoctorLayout({
@@ -67,6 +68,7 @@ export default function DoctorLayout({
   };
 
   const getActiveTab = () => {
+    if (pathname.includes("/tips")) return "tips";
     if (pathname.includes("/appointments")) return "appointments";
     if (pathname.includes("/profile")) return "profile";
     if (pathname.includes("/settings")) return "settings";
@@ -76,6 +78,7 @@ export default function DoctorLayout({
   const activeTab = getActiveTab();
 
   const getPageTitle = () => {
+    if (pathname.includes("/tips")) return "Tips";
     if (pathname.includes("/appointments")) return "Appointments";
     if (pathname.includes("/profile")) return "Profile";
     if (pathname.includes("/settings")) return "Settings";
@@ -138,6 +141,15 @@ export default function DoctorLayout({
                 >
                   <User className="w-4 h-4 mr-2" />
                   Profile
+                </Button>
+              </Link>
+              <Link href="/doctor/tips">
+                <Button
+                  variant={activeTab === "tips" ? "default" : "ghost"}
+                  className="w-full justify-start"
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Tips
                 </Button>
               </Link>
             </nav>

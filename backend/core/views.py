@@ -16,6 +16,39 @@ from .serializers import (
     CustomerProfileSerializer,
 )
 
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """Change password for authenticated user.
+
+        Expected payload: { current_password, new_password, confirm_password }
+        """
+        data = request.data or {}
+        current = data.get('current_password')
+        new = data.get('new_password')
+        confirm = data.get('confirm_password')
+
+        if not current or not new or not confirm:
+            return Response({'success': False, 'message': 'All password fields are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new != confirm:
+            return Response({'success': False, 'message': "New passwords don't match."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new) < 6:
+            return Response({'success': False, 'message': 'New password must be at least 6 characters.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        if not user.check_password(current):
+            return Response({'success': False, 'message': 'Current password is incorrect.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user.set_password(new)
+            user.save()
+            return Response({'success': True, 'message': 'Password changed successfully.'}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({'success': False, 'message': 'Failed to change password.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class RegisterView(APIView):
     permission_classes = [AllowAny]
 

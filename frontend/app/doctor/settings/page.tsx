@@ -368,7 +368,7 @@ export default function DoctorSettings() {
                     htmlFor="consultation_fee"
                     className="text-sm font-medium text-gray-700"
                   >
-                    Consultation Fee (₹)
+                    Consultation Fee (Rs )
                   </Label>
                   <Input
                     id="consultation_fee"

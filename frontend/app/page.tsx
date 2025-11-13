@@ -258,7 +258,7 @@ export default function HomePage() {
               { number: "10,000+", label: "Happy Patients", icon: "👥" },
               { number: "100+", label: "Expert Doctors", icon: "👨‍⚕️" },
               { number: "24/7", label: "Support Available", icon: "🕐" },
-              { number: "₹500", label: "Consultation Fee", icon: "💰" },
+              { number: "Rs 500", label: "Consultation Fee", icon: "💰" },
             ].map((stat, index) => (
               <div
                 key={index}

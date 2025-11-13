@@ -43,16 +43,16 @@ export default function AnalyticsPage() {
             <div className="space-y-4">
               <div className="flex justify-between">
                 <span>Total Revenue:</span>
-                <span className="font-semibold">₹{totalRevenue}</span>
+                <span className="font-semibold">Rs {totalRevenue}</span>
               </div>
               <div className="flex justify-between">
                 <span>This Month:</span>
-                <span className="font-semibold">₹{totalRevenue}</span>
+                <span className="font-semibold">Rs {totalRevenue}</span>
               </div>
               <div className="flex justify-between">
                 <span>Pending Payments:</span>
                 <span className="font-semibold text-orange-600">
-                  ₹{pendingPayments * 500}
+                  Rs {pendingPayments * 500}
                 </span>
               </div>
             </div>
@@ -67,17 +67,14 @@ export default function AnalyticsPage() {
             <div className="space-y-4">
               <div className="flex justify-between">
                 <span>Total Appointments:</span>
-                <span className="font-semibold">
-                  {mockAppointments.length}
-                </span>
+                <span className="font-semibold">{mockAppointments.length}</span>
               </div>
               <div className="flex justify-between">
                 <span>Completed:</span>
                 <span className="font-semibold text-green-600">
                   {
-                    mockAppointments.filter(
-                      (apt) => apt.status === "completed"
-                    ).length
+                    mockAppointments.filter((apt) => apt.status === "completed")
+                      .length
                   }
                 </span>
               </div>
@@ -85,9 +82,8 @@ export default function AnalyticsPage() {
                 <span>Upcoming:</span>
                 <span className="font-semibold text-blue-600">
                   {
-                    mockAppointments.filter(
-                      (apt) => apt.status === "confirmed"
-                    ).length
+                    mockAppointments.filter((apt) => apt.status === "confirmed")
+                      .length
                   }
                 </span>
               </div>

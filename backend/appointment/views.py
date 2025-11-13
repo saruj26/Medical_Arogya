@@ -10,6 +10,7 @@ from .serializers import AppointmentSerializer, PrescriptionSerializer, Prescrip
 from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
+import datetime
 
 class AppointmentListView(APIView):
     permission_classes = [IsAuthenticated]
@@ -236,6 +237,134 @@ class AppointmentDetailView(APIView):
 
         serializer = AppointmentSerializer(appointment)
         return Response({'success': True, 'appointment': serializer.data})
+
+    def put(self, request, pk):
+        """
+        Allow a customer to edit their appointment (date, time, reason).
+        Validations:
+        - Only the owning customer may update
+        - Cannot update cancelled or completed appointments
+        - Cannot update if appointment is within 24 hours of scheduled datetime
+        - New date must be one of the doctor's available_days
+        - New time must match one of the doctor's available_time_slots (start time)
+        - Slot must not already be booked by another appointment
+        Returns serialized appointment on success
+        """
+        try:
+            appointment = Appointment.objects.select_related('doctor', 'patient').get(pk=pk)
+        except Appointment.DoesNotExist:
+            return Response({'success': False, 'message': 'Appointment not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Only the owning customer may update
+        if request.user.role != 'customer' or appointment.patient != request.user:
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Do not allow updates for cancelled or completed
+        if appointment.status in ['cancelled', 'completed']:
+            return Response({'success': False, 'message': 'Cannot modify this appointment'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Prevent edits within 24 hours of the scheduled appointment datetime
+        try:
+            appt_dt = datetime.datetime.combine(appointment.appointment_date, appointment.appointment_time)
+            now = timezone.now()
+            # Ensure appt_dt aware if now is aware
+            if timezone.is_aware(now) and timezone.is_naive(appt_dt):
+                appt_dt = timezone.make_aware(appt_dt, timezone.get_current_timezone())
+            if appt_dt <= now + datetime.timedelta(hours=24):
+                return Response({'success': False, 'message': 'Appointments cannot be edited within 24 hours of the scheduled time.'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            # If anything goes wrong computing times, disallow the edit for safety
+            return Response({'success': False, 'message': 'Unable to validate appointment timing'}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = request.data or {}
+        new_date = data.get('appointment_date')
+        new_time = data.get('appointment_time')
+        new_reason = data.get('reason', appointment.reason)
+
+        # Helper to parse incoming time strings into time objects
+        def parse_time_str(value):
+            if not value:
+                return None
+            if isinstance(value, datetime.time):
+                return value
+            # Try several common formats
+            for fmt in ("%H:%M:%S", "%H:%M", "%I:%M %p", "%I:%M%p"):
+                try:
+                    return datetime.datetime.strptime(value, fmt).time()
+                except Exception:
+                    continue
+            # As a last resort, try trimming seconds and parsing
+            try:
+                parts = value.split(':')
+                if len(parts) >= 2:
+                    h = int(parts[0]); m = int(parts[1])
+                    return datetime.time(hour=h, minute=m)
+            except Exception:
+                pass
+            return None
+
+        # Determine target date and time (fall back to existing)
+        target_date = appointment.appointment_date
+        target_time = appointment.appointment_time
+
+        if new_date:
+            try:
+                target_date = datetime.datetime.strptime(new_date, "%Y-%m-%d").date()
+            except Exception:
+                return Response({'success': False, 'message': 'Invalid date format. Use YYYY-MM-DD.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if new_time:
+            parsed_time = parse_time_str(new_time)
+            if not parsed_time:
+                return Response({'success': False, 'message': 'Invalid time format.'}, status=status.HTTP_400_BAD_REQUEST)
+            target_time = parsed_time
+
+        # Validate target date is one of doctor's available_days (if doctor has availability configured)
+        doctor_profile = appointment.doctor
+        try:
+            if doctor_profile.available_days and len(doctor_profile.available_days) > 0:
+                weekday = target_date.strftime('%A').lower()
+                available_days = [d.strip().lower() for d in (doctor_profile.available_days or [])]
+                if weekday not in available_days:
+                    return Response({'success': False, 'message': 'Doctor is not available on the selected date.'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            # ignore and continue if doctor availability is malformed
+            pass
+
+        # Validate target_time is one of doctor's available_time_slots (compare start time)
+        try:
+            slot_ok = True
+            if doctor_profile.available_time_slots and len(doctor_profile.available_time_slots) > 0:
+                slot_ok = False
+                for slot in doctor_profile.available_time_slots:
+                    # slot may be in formats like '09:00 - 09:30' or '9:00 AM - 9:30 AM'
+                    start = str(slot).split('-')[0].strip()
+                    start_time = parse_time_str(start)
+                    if start_time and start_time == target_time:
+                        slot_ok = True
+                        break
+                if not slot_ok:
+                    return Response({'success': False, 'message': 'Selected time is not within the doctor\'s available time slots.'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception:
+            pass
+
+        # Check for booking conflicts (another appointment at same doctor/date/time)
+        conflict_qs = Appointment.objects.filter(doctor=doctor_profile, appointment_date=target_date, appointment_time=target_time).exclude(pk=appointment.pk)
+        if conflict_qs.exists():
+            return Response({'success': False, 'message': 'Selected time slot is already booked. Please choose another slot.'}, status=status.HTTP_409_CONFLICT)
+
+        # Perform update
+        try:
+            with transaction.atomic():
+                appointment.appointment_date = target_date
+                appointment.appointment_time = target_time
+                appointment.reason = new_reason
+                appointment.save(update_fields=['appointment_date', 'appointment_time', 'reason', 'updated_at'])
+
+            serializer = AppointmentSerializer(appointment)
+            return Response({'success': True, 'message': 'Appointment updated successfully', 'appointment': serializer.data})
+        except Exception as e:
+            return Response({'success': False, 'message': f'Failed to update appointment: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class AppointmentCancelView(APIView):
     permission_classes = [IsAuthenticated]

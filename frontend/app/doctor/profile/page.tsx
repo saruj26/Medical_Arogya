@@ -277,7 +277,7 @@ export default function DoctorProfilePage() {
             </div>
             <div>
               <Label htmlFor="consultation_fee" className="text-sm font-medium">
-                Consultation Fee (₹)
+                Consultation Fee (Rs )
               </Label>
               <Input
                 id="consultation_fee"

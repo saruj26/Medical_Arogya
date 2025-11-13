@@ -38,8 +38,8 @@ export default function DoctorAppointmentsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-      const today = new Date().toISOString().split('T')[0];
-      
+      const today = new Date().toISOString().split("T")[0];
+
       let url = `/api/appointment/appointments/`;
       if (selectedStatus) {
         url += `?status=${selectedStatus}`;
@@ -122,39 +122,64 @@ export default function DoctorAppointmentsPage() {
                 No Appointments Found
               </h3>
               <p className="text-gray-600">
-                {selectedStatus 
+                {selectedStatus
                   ? `No ${selectedStatus} appointments found`
-                  : "No appointments found"
-                }
+                  : "No appointments found"}
               </p>
             </CardContent>
           </Card>
         ) : (
           appointments.map((appointment) => (
-            <Card key={appointment.id} className="hover:shadow-lg transition-shadow">
+            <Card
+              key={appointment.id}
+              className="hover:shadow-lg transition-shadow"
+            >
               <CardContent className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
                   <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
                     <Avatar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto sm:mx-0">
                       <AvatarFallback>
-                        {appointment.patient_name.split(" ").map((n) => n[0]).join("")}
+                        {appointment.patient_name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 text-center sm:text-left">
-                      <h3 className="font-semibold text-base sm:text-lg">{appointment.patient_name}</h3>
+                      <h3 className="font-semibold text-base sm:text-lg">
+                        {appointment.patient_name}
+                      </h3>
                       <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                        <p>Age: {appointment.patient_age} • Gender: {appointment.patient_gender}</p>
+                        <p>
+                          Age: {appointment.patient_age} • Gender:{" "}
+                          {appointment.patient_gender}
+                        </p>
                         <p className="flex items-center justify-center sm:justify-start gap-1">
                           <Phone className="w-3 h-3" />
                           {appointment.patient_phone}
                         </p>
-                        <p><strong>Appointment ID:</strong> {appointment.appointment_id}</p>
-                        <p><strong>Date:</strong> {new Date(appointment.appointment_date).toLocaleDateString()}</p>
-                        <p><strong>Reason:</strong> {appointment.reason}</p>
+                        <p>
+                          <strong>Appointment ID:</strong>{" "}
+                          {appointment.appointment_id}
+                        </p>
+                        <p>
+                          <strong>Date:</strong>{" "}
+                          {new Date(
+                            appointment.appointment_date
+                          ).toLocaleDateString()}
+                        </p>
+                        <p>
+                          <strong>Reason:</strong> {appointment.reason}
+                        </p>
                         {appointment.symptoms && (
-                          <p><strong>Symptoms:</strong> {appointment.symptoms}</p>
+                          <p>
+                            <strong>Symptoms:</strong> {appointment.symptoms}
+                          </p>
                         )}
-                        <p><strong>Fee:</strong> ₹{appointment.consultation_fee}</p>
+                        <p>
+                          <strong>Fee:</strong> Rs{" "}
+                          {appointment.consultation_fee}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -162,10 +187,12 @@ export default function DoctorAppointmentsPage() {
                   <div className="text-center lg:text-right">
                     <div className="flex items-center justify-center lg:justify-end gap-2 mb-2">
                       <Clock className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium">{appointment.appointment_time}</span>
+                      <span className="font-medium">
+                        {appointment.appointment_time}
+                      </span>
                     </div>
-                    <Badge 
-                      variant={getStatusVariant(appointment.status)} 
+                    <Badge
+                      variant={getStatusVariant(appointment.status)}
                       className="mb-3 capitalize"
                     >
                       {appointment.status}
@@ -175,10 +202,15 @@ export default function DoctorAppointmentsPage() {
                         size="sm"
                         className="w-full bg-[#1656a4] hover:bg-[#1656a4]/90"
                         onClick={() => handleAddPrescription(appointment.id)}
-                        disabled={appointment.status === "completed" || appointment.status === "cancelled"}
+                        disabled={
+                          appointment.status === "completed" ||
+                          appointment.status === "cancelled"
+                        }
                       >
                         <FileText className="w-4 h-4 mr-2" />
-                        {appointment.status === "completed" ? "Prescription Added" : "Add Prescription"}
+                        {appointment.status === "completed"
+                          ? "Prescription Added"
+                          : "Add Prescription"}
                       </Button>
                     </div>
                   </div>

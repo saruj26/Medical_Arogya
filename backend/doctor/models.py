@@ -48,3 +48,27 @@ class DoctorProfile(models.Model):
             pass
 
         super().save(*args, **kwargs)
+
+
+class DoctorTip(models.Model):
+    """A short, doctor-authored tip article that customers can read.
+
+    Stored under the doctor who authored it (DoctorProfile). Tips are intended
+    to be small, helpful pieces of health advice (non-diagnostic) — the UI and
+    frontend will make clear these are educational tips, not medical
+    consultations.
+    """
+    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='tips')
+    title = models.CharField(max_length=200)
+    body = models.TextField()
+    tags = models.JSONField(default=list, blank=True)
+    is_published = models.BooleanField(default=True)
+    views = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.title} — {self.doctor}"

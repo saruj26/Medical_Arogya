@@ -555,7 +555,7 @@ export default function BookAppointment() {
                             Consultation Fee
                           </span>
                           <span className="text-2xl font-bold text-green-600">
-                            ₹{doctor.consultation_fee}
+                            Rs {doctor.consultation_fee}
                           </span>
                         </div>
                         <p className="text-green-600 text-sm mt-1">
@@ -881,7 +881,7 @@ export default function BookAppointment() {
                           Total Amount:
                         </span>
                         <span className="text-2xl font-bold text-green-600">
-                          ₹{doctor.consultation_fee}
+                          Rs {doctor.consultation_fee}
                         </span>
                       </div>
                     </div>
@@ -962,7 +962,7 @@ export default function BookAppointment() {
                           onClick={() => setShowCardForm(true)}
                         >
                           <CreditCard className="w-5 h-5 mr-2" />
-                          Pay by ATM/Card ₹{doctor.consultation_fee}
+                          Pay by ATM/Card Rs {doctor.consultation_fee}
                         </Button>
                       </div>
 
@@ -1143,7 +1143,7 @@ export default function BookAppointment() {
                                   await handleAppointmentBooking("atm");
                                 }}
                               >
-                                Confirm & Pay ₹{doctor.consultation_fee}
+                                Confirm & Pay Rs {doctor.consultation_fee}
                               </Button>
                             </div>
                           </div>
@@ -1170,12 +1170,12 @@ export default function BookAppointment() {
                 <p className="text-xl text-gray-600 mb-8">
                   {lastPaymentStatus ? (
                     <>
-                      Your appointment has been confirmed and payment of ₹
+                      Your appointment has been confirmed and payment of Rs
                       {doctor.consultation_fee} has been processed.
                     </>
                   ) : (
                     <>
-                      Your appointment has been confirmed. Please pay ₹
+                      Your appointment has been confirmed. Please pay Rs
                       {doctor.consultation_fee} at the clinic (Cash on Arrival).
                     </>
                   )}
@@ -1213,7 +1213,7 @@ export default function BookAppointment() {
                     <div>
                       <p className="text-sm text-gray-600">Amount Paid</p>
                       <p className="font-semibold text-green-600">
-                        ₹{doctor.consultation_fee}
+                        Rs {doctor.consultation_fee}
                       </p>
                     </div>
                   </div>

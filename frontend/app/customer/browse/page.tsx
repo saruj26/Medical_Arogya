@@ -354,7 +354,7 @@ export default function BrowseDoctors() {
                               Consultation Fee
                             </p>
                             <p className="text-xl sm:text-2xl font-bold text-green-600">
-                              ₹{doctor.consultation_fee}
+                              Rs {doctor.consultation_fee}
                             </p>
                           </div>
                           <Link href={`/customer/book/${doctor.id}`}>
@@ -465,7 +465,7 @@ export default function BrowseDoctors() {
                                 Consultation Fee
                               </p>
                               <p className="text-xl sm:text-2xl font-bold text-green-600">
-                                ₹{doctor.consultation_fee}
+                                Rs {doctor.consultation_fee}
                               </p>
                             </div>
                             <Link href={`/customer/book/${doctor.id}`}>
