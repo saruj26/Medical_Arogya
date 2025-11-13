@@ -434,7 +434,7 @@ export default function BookAppointment() {
           <p className="text-gray-600 mb-4">
             The requested doctor could not be found.
           </p>
-          <Link href="/customer/browse">
+          <Link href="/customer/doctors">
             <Button className="bg-[#1656a4] hover:bg-[#1656a4]/90">
               Back to Doctors
             </Button>
@@ -449,7 +449,7 @@ export default function BookAppointment() {
       {/* Header */}
       <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/customer/browse">
+          <Link href="/customer/doctors">
             <Button
               variant="outline"
               size="sm"

@@ -3,6 +3,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import TipCard from "@/components/tips/tip-card";
+import { MessageSquare, Shield } from "lucide-react";
 
 type Tip = {
   id: number;
@@ -47,26 +48,35 @@ export default function CustomerTipsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 py-6">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30 ">
+        {/* Enhanced Header */}
+      <header className="bg-white/90 backdrop-blur-xl border-b border-gray-200/60 sticky top-0 z-50 shadow-sm">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <MessageSquare className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900">Health & Wellness Tips</h1>
+                  <p className="text-sm text-gray-600">Expert medical care at your fingertips</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Shield className="w-4 h-4 text-green-500" />
+              <span>Secure & Confidential</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
         {/* Header Section */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 bg-blue-100 rounded-2xl mb-3">
-            <svg
-              className="w-6 h-6 text-blue-600"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 mb-2">
+          <h1 className="text-3xl md:text-3xl font-semibold bg-gradient-to-r from-blue-900 to-cyan-800 bg-clip-text text-transparent mb-2">
             Health & Wellness Tips
           </h1>
           <p className="text-base md:text-lg text-gray-600 max-w-2xl mx-auto">

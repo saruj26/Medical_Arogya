@@ -156,7 +156,7 @@ export default function DoctorLayout({
           </div>
 
           {/* Sidebar Footer */}
-          <div className="p-4 border-t">
+          <div className="p-2 border-t">
             <div className="space-y-2">
               <Link href="/doctor/settings">
                 <Button variant="ghost" className="w-full justify-start">

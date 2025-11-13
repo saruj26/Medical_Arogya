@@ -40,11 +40,13 @@ export default function CustomerLayout({
     searchParams?.get("tab") ||
     (pathname?.includes("/customer/settings")
       ? "settings"
+       : pathname?.includes("/customer/prescription")
+      ? "prescriptions"
       : pathname?.includes("/customer/tips")
       ? "tips"
       : pathname?.includes("/customer/chat")
       ? "chat"
-      : pathname?.includes("/customer/browse")
+      : pathname?.includes("/customer/doctors")
       ? "doctors"
       : "appointments");
 
@@ -104,7 +106,7 @@ export default function CustomerLayout({
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
       {/* Header */}
       <header className="bg-white border-b border-gray-200/80 sticky top-0 z-50 shadow-sm h-16 flex items-center backdrop-blur-sm bg-white/95">
-        <div className="w-full px-4 sm:px-6 flex items-center justify-between">
+        <div className="w-full px-4 sm:px-6 flex items-center justify-between ">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -120,7 +122,7 @@ export default function CustomerLayout({
             {/* Logo */}
             <Link
               href="/"
-              className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity"
+              className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity "
             >
               <div className="w-9 h-9 bg-gradient-to-br from-[#1656a4] to-[#0f3f7f] rounded-lg flex items-center justify-center shadow-sm">
                 <Stethoscope className="w-5 h-5 text-white" />
@@ -196,19 +198,19 @@ export default function CustomerLayout({
                 fallback={<div className="animate-pulse">Loading...</div>}
               >
                 <NavItem
-                  href="/customer?tab=appointments"
+                  href="/customer"
                   value="appointments"
                   label="My Appointments"
                   icon={<Calendar className="w-4 h-4" />}
                 />
                 <NavItem
-                  href="/customer?tab=doctors"
+                  href="/customer/doctors"
                   value="doctors"
                   label="Find Doctors"
                   icon={<Stethoscope className="w-4 h-4" />}
                 />
                 <NavItem
-                  href="/customer?tab=prescriptions"
+                  href="/customer/prescription"
                   value="prescriptions"
                   label="Prescriptions"
                   icon={<FileText className="w-4 h-4" />}
@@ -226,7 +228,7 @@ export default function CustomerLayout({
                   icon={<MessageSquare className="w-4 h-4" />}
                 />
                 <NavItem
-                  href="/customer?tab=profile"
+                  href="/customer/profile"
                   value="profile"
                   label="My Profile"
                   icon={<User className="w-4 h-4" />}
@@ -264,7 +266,7 @@ export default function CustomerLayout({
 
         {/* Main content - Scrollable area. On large screens add left margin to avoid overlap with fixed sidebar */}
         <main className="flex-1 overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50/30 lg:ml-64 min-h-0">
-          <div className="w-full px-4 sm:px-6 lg:px-8 py-6 sm:py-8 max-w-7xl mx-auto">
+          <div className="w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
             {children}
           </div>
         </main>

@@ -67,7 +67,7 @@ export function ChangePassword({
         return;
       }
 
-  const res = await fetch(api("/api/auth/change-password/"), {
+      const res = await fetch(api("/api/auth/change-password/"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
