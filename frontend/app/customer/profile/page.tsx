@@ -301,14 +301,14 @@ export default function ProfilePage() {
               </label>
               <textarea
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#1656a4] focus:border-transparent transition-all"
-                rows={4}
+                rows={2}
                 placeholder="Enter your complete address"
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 pt-2">
               <Button
                 className="bg-[#1656a4] hover:bg-[#0f3f7f] text-white font-semibold h-11 px-6 sm:w-auto w-full"
                 onClick={handleProfileUpdate}

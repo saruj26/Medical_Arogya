@@ -40,7 +40,7 @@ export default function CustomerLayout({
     searchParams?.get("tab") ||
     (pathname?.includes("/customer/settings")
       ? "settings"
-       : pathname?.includes("/customer/prescription")
+      : pathname?.includes("/customer/prescription")
       ? "prescriptions"
       : pathname?.includes("/customer/tips")
       ? "tips"
@@ -48,6 +48,8 @@ export default function CustomerLayout({
       ? "chat"
       : pathname?.includes("/customer/doctors")
       ? "doctors"
+      : pathname?.includes("/customer/profile")
+      ? "profile"
       : "appointments");
 
   const userEmail = mounted ? localStorage.getItem("userEmail") : null;
@@ -97,7 +99,7 @@ export default function CustomerLayout({
         <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
           {icon}
         </span>
-        <span className="truncate">{label}</span>
+        <span className="truncate font-semibold">{label}</span>
       </Link>
     );
   };
@@ -248,7 +250,7 @@ export default function CustomerLayout({
                 }`}
               >
                 <Settings className="w-4 h-4 flex-shrink-0" />
-                <span>Account Settings</span>
+                <span className="font-semibold">Account Settings</span>
               </Link>
               <button
                 onClick={() => {
@@ -258,7 +260,7 @@ export default function CustomerLayout({
                 className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all duration-200 border border-transparent hover:border-red-200"
               >
                 <LogOut className="w-4 h-4 flex-shrink-0" />
-                <span>Sign Out</span>
+                <span className="font-semibold">Sign Out</span>
               </button>
             </div>
           </div>
@@ -266,7 +268,7 @@ export default function CustomerLayout({
 
         {/* Main content - Scrollable area. On large screens add left margin to avoid overlap with fixed sidebar */}
         <main className="flex-1 overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50/30 lg:ml-64 min-h-0">
-          <div className="w-full px-4 sm:px-6 lg:px-8 py-3 sm:py-4 max-w-7xl mx-auto">
+          <div className="w-full px-4 sm:px-4 lg:px-4 xl:px-4 py-3 sm:py-4 max-w-8xl mx-auto">
             {children}
           </div>
         </main>

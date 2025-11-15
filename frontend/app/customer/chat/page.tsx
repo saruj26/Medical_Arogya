@@ -15,6 +15,8 @@ import {
   Trash2,
   Search,
   RefreshCw,
+  MoreHorizontal,
+  X,
 } from "lucide-react";
 
 type Msg = {
@@ -47,6 +49,9 @@ export default function MedicalChatPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const bottomRef = useRef<HTMLDivElement | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const initialMessagesLoadedRef = useRef(false);
+  const prevMessagesLenRef = useRef(0);
+  const [mobileSessionsOpen, setMobileSessionsOpen] = useState(false);
 
   const [token, setToken] = useState<string | null>(
     typeof window !== "undefined" ? localStorage.getItem("token") : null
@@ -197,7 +202,6 @@ export default function MedicalChatPage() {
 
   const fetchMessages = async (sid: number) => {
     setMessagesLoading(true);
-    setMessages([]);
     try {
       const t =
         typeof window !== "undefined" ? localStorage.getItem("token") : token;
@@ -231,7 +235,21 @@ export default function MedicalChatPage() {
 
       const data = await res.json();
       if (data.success) {
-        setMessages(data.messages || []);
+        const newMsgs = data.messages || [];
+        const prevLen = prevMessagesLenRef.current || 0;
+        setMessages(newMsgs);
+        // If we've already loaded messages before, only auto-scroll when new messages appended
+        if (initialMessagesLoadedRef.current) {
+          if (newMsgs.length > prevLen) {
+            requestAnimationFrame(() =>
+              bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+            );
+          }
+        } else {
+          // first successful messages load — set flag but avoid auto-scrolling to prevent jump
+          initialMessagesLoadedRef.current = true;
+        }
+        prevMessagesLenRef.current = newMsgs.length;
         setError("");
       } else {
         setError(data.message || "Failed to load messages");
@@ -247,14 +265,7 @@ export default function MedicalChatPage() {
 
   // Avoid an automatic jump when the page first loads (e.g. when navigating
   // to the chat page). Only auto-scroll on subsequent message updates.
-  const initialScrollRef = React.useRef(true);
-  useEffect(() => {
-    if (initialScrollRef.current) {
-      initialScrollRef.current = false;
-      return;
-    }
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isTyping]);
+  // Remove automatic scrolling on mount; we explicitly scroll after messages load
 
   const handleSessionSelect = async (selectedSessionId: number) => {
     setSessionId(selectedSessionId);
@@ -326,11 +337,20 @@ export default function MedicalChatPage() {
 
       const data = await res.json();
       if (data.success) {
-        setMessages((m) => [
-          ...m.filter((mm) => mm.id !== tempUser.id),
-          data.user_message,
-          data.assistant_message,
-        ]);
+        setMessages((m) => {
+          const filtered = m.filter((mm) => mm.id !== tempUser.id);
+          const updated = [
+            ...filtered,
+            data.user_message,
+            data.assistant_message,
+          ];
+          // update prev length and scroll to bottom after render
+          prevMessagesLenRef.current = updated.length;
+          requestAnimationFrame(() =>
+            bottomRef.current?.scrollIntoView({ behavior: "smooth" })
+          );
+          return updated;
+        });
         // Refresh sessions to update last message and timestamps
         await fetchSessions();
       } else {
@@ -383,9 +403,9 @@ export default function MedicalChatPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-6xl mx-auto h-[700px] flex">
-        {/* Sidebar - Fixed Search and Chat History */}
-        <div className="w-60 bg-white border-r border-gray-200 flex flex-col min-h-0">
+      <div className="max-w-8xl mx-auto h-[700px] flex items-stretch">
+        {/* Sidebar - Fixed Search and Chat History (desktop only) */}
+        <div className="hidden lg:flex w-64 bg-white border-r border-gray-200 flex-col min-h-0">
           {/* Fixed Header */}
           <div className="px-3 py-2 border-b border-gray-200 bg-white flex-shrink-0">
             <div className="flex items-center justify-between mb-2">
@@ -490,11 +510,110 @@ export default function MedicalChatPage() {
           </ScrollArea>
         </div>
 
+        {/* Mobile: slide-over panel for sessions */}
+        {mobileSessionsOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden">
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setMobileSessionsOpen(false)}
+            />
+            <div className="absolute inset-y-0 left-0 w-72 bg-white border-r border-gray-200 shadow-xl p-3 overflow-auto">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold">Medical Chats</h3>
+                <button
+                  onClick={() => setMobileSessionsOpen(false)}
+                  className="p-2 rounded-md hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  type="text"
+                  placeholder="Search conversations..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-full bg-gray-50 border-gray-200 focus:bg-white"
+                />
+              </div>
+              <div className="space-y-2">
+                {sessions.length === 0 ? (
+                  <div className="text-xs text-gray-500 px-3 py-4 text-center">
+                    No previous conversations
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => createSession()}
+                      className="mt-2 w-full"
+                    >
+                      Start New Chat
+                    </Button>
+                  </div>
+                ) : (
+                  sessions.map((s: Session) => {
+                    const active = sessionId === s.id;
+                    const lastMsg = s.last_message || "No messages yet";
+                    const updatedAt = s.updated_at
+                      ? new Date(s.updated_at)
+                      : null;
+                    const messageCount = s.message_count || 0;
+
+                    return (
+                      <div
+                        key={s.id}
+                        onClick={() => {
+                          handleSessionSelect(s.id);
+                          setMobileSessionsOpen(false);
+                        }}
+                        className={`p-3 rounded-lg cursor-pointer flex flex-col border transition-colors ${
+                          active
+                            ? "bg-blue-50 border-blue-200"
+                            : "hover:bg-gray-50 border-transparent"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="font-medium text-sm text-gray-800 truncate flex-1">
+                            {s.title || `Conversation ${s.id}`}
+                          </div>
+                          {updatedAt && (
+                            <div className="text-[10px] text-gray-400 whitespace-nowrap">
+                              {updatedAt.toLocaleDateString()}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex justify-between items-center mt-1">
+                          <div className="text-xs text-gray-600 truncate flex-1">
+                            {lastMsg}
+                          </div>
+                          {messageCount > 0 && (
+                            <div className="text-[10px] bg-gray-200 text-gray-600 px-1 rounded ml-2">
+                              {messageCount}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col min-h-0 justify-start">
-          <Card className="flex flex-col shadow-sm border border-gray-200 h-[600px] w-full">
+          <Card className="flex flex-col shadow-sm border border-gray-200 h-full w-full">
             <CardHeader className="sticky top-0 z-10 bg-white border-b border-gray-200 py-4 flex-shrink-0">
               <div className="flex items-center space-x-3">
+                {/* mobile open sessions button */}
+                <button
+                  className="lg:hidden p-2 rounded-md mr-2 hover:bg-gray-100"
+                  onClick={() => setMobileSessionsOpen(true)}
+                  aria-label="Open conversations"
+                >
+                  <MoreHorizontal className="w-5 h-5 text-gray-700" />
+                </button>
                 <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                   <Bot className="w-4 h-4 text-white" />
                 </div>

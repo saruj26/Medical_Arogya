@@ -44,6 +44,8 @@ interface Doctor {
   available_days: string[];
   available_time_slots: string[];
   is_profile_complete: boolean;
+  avg_rating?: number;
+  review_count?: number;
 }
 
 export default function BrowseDoctors() {
@@ -176,8 +178,12 @@ export default function BrowseDoctors() {
                   <Stethoscope className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">Find Doctors</h1>
-                  <p className="text-sm text-gray-600">Expert medical care at your fingertips</p>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    Find Doctors
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    Expert medical care at your fingertips
+                  </p>
                 </div>
               </div>
             </div>
@@ -201,7 +207,8 @@ export default function BrowseDoctors() {
             Find Your Perfect Doctor
           </h1>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Connect with certified healthcare professionals for personalized medical care. 
+            Connect with certified healthcare professionals for personalized
+            medical care.
           </p>
         </div>
 
@@ -209,15 +216,15 @@ export default function BrowseDoctors() {
           {/* Enhanced Tabs */}
           <div className="flex justify-center">
             <TabsList className="grid w-full max-w-md grid-cols-2 p-1 bg-gray-100/80 rounded-2xl">
-              <TabsTrigger 
-                value="by-specialty" 
+              <TabsTrigger
+                value="by-specialty"
                 className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-700 transition-all"
               >
                 <Stethoscope className="w-4 h-4 mr-2" />
                 By Specialty
               </TabsTrigger>
-              <TabsTrigger 
-                value="by-date" 
+              <TabsTrigger
+                value="by-date"
                 className="rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-blue-700 transition-all"
               >
                 <Calendar className="w-4 h-4 mr-2" />
@@ -244,8 +251,8 @@ export default function BrowseDoctors() {
                       </SelectTrigger>
                       <SelectContent className="rounded-xl border-0 shadow-xl">
                         {specialties.map((specialty) => (
-                          <SelectItem 
-                            key={specialty} 
+                          <SelectItem
+                            key={specialty}
                             value={specialty}
                             className="rounded-lg hover:bg-blue-50 focus:bg-blue-50"
                           >
@@ -255,7 +262,7 @@ export default function BrowseDoctors() {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div>
                     <label className="text-sm font-semibold text-gray-700 mb-3 block">
                       Search Doctors
@@ -297,11 +304,15 @@ export default function BrowseDoctors() {
                     Available Doctors
                   </h2>
                   <p className="text-gray-600 mt-1">
-                    {filteredDoctors.length} specialist{filteredDoctors.length !== 1 ? 's' : ''} found
+                    {filteredDoctors.length} specialist
+                    {filteredDoctors.length !== 1 ? "s" : ""} found
                   </p>
                 </div>
-                
-                <Badge variant="secondary" className="text-sm bg-blue-100 text-blue-800 hover:bg-blue-100">
+
+                <Badge
+                  variant="secondary"
+                  className="text-sm bg-blue-100 text-blue-800 hover:bg-blue-100"
+                >
                   Verified Professionals
                 </Badge>
               </div>
@@ -314,7 +325,8 @@ export default function BrowseDoctors() {
                       No Doctors Found
                     </h3>
                     <p className="text-gray-600 mb-6">
-                      Try adjusting your search criteria or browse all specialties.
+                      Try adjusting your search criteria or browse all
+                      specialties.
                     </p>
                     <Button
                       onClick={() => {
@@ -331,8 +343,8 @@ export default function BrowseDoctors() {
               ) : (
                 <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredDoctors.map((doctor) => (
-                    <Card 
-                      key={doctor.id} 
+                    <Card
+                      key={doctor.id}
                       className="border-0 shadow-lg hover:shadow-2xl transition-all duration-500 group hover:scale-[1.02] bg-white/90 backdrop-blur-sm overflow-hidden"
                     >
                       <CardContent className="p-0">
@@ -347,7 +359,7 @@ export default function BrowseDoctors() {
                                   .join("")}
                               </AvatarFallback>
                             </Avatar>
-                            
+
                             <div className="flex-1 min-w-0">
                               <h3 className="text-xl font-bold text-gray-900 truncate">
                                 {doctor.user_name}
@@ -357,7 +369,9 @@ export default function BrowseDoctors() {
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Award className="w-4 h-4 text-amber-500" />
-                                <span className="text-sm text-gray-600">{doctor.qualification}</span>
+                                <span className="text-sm text-gray-600">
+                                  {doctor.qualification}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -366,13 +380,22 @@ export default function BrowseDoctors() {
                         {/* Doctor Details */}
                         <div className="px-6 pb-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
+                            <Link
+                              href={`/customer/doctors/${doctor.id}/reviews`}
+                              className="flex items-center gap-1 group-hover:text-blue-700 transition-colors"
+                            >
                               <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                              <span className="font-semibold text-gray-900">4.8</span>
-                              <span className="text-gray-500 text-sm">(150+)</span>
-                            </div>
+                              <span className="font-semibold text-gray-900">
+                                {(doctor.avg_rating ?? 0).toFixed(1)}
+                              </span>
+                              <span className="text-gray-500 text-sm">
+                                ({doctor.review_count ?? 0})
+                              </span>
+                            </Link>
                             <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">
-                              {doctor.is_profile_complete ? "Available Today" : "Not Available"}
+                              {doctor.is_profile_complete
+                                ? "Available Today"
+                                : "Not Available"}
                             </Badge>
                           </div>
 
@@ -382,7 +405,8 @@ export default function BrowseDoctors() {
                           </div>
 
                           <div className="text-sm text-gray-600 line-clamp-2">
-                            {doctor.bio || "Dedicated healthcare professional committed to providing excellent patient care."}
+                            {doctor.bio ||
+                              "Dedicated healthcare professional committed to providing excellent patient care."}
                           </div>
                         </div>
 
@@ -390,24 +414,35 @@ export default function BrowseDoctors() {
                         <div className="bg-gray-50/80 p-4 border-t">
                           <div className="flex items-center justify-between mb-3">
                             <div>
-                              <p className="text-xs text-gray-500">Consultation Fee</p>
+                              <p className="text-xs text-gray-500">
+                                Consultation Fee
+                              </p>
                               <p className="text-xl font-bold text-green-600">
                                 Rs {doctor.consultation_fee}
                               </p>
                             </div>
-                            <Link href={`/customer/book/${doctor.id}`} className="flex-1 ml-4">
+                            <Link
+                              href={`/customer/book/${doctor.id}`}
+                              className="flex-1 ml-4"
+                            >
                               <Button
                                 className="w-full bg-blue-600 hover:bg-blue-700 h-11 font-semibold shadow-lg transition-all duration-300 hover:shadow-blue-200"
                                 disabled={!doctor.is_profile_complete}
                               >
-                                {doctor.is_profile_complete ? "Book Appointment" : "Not Available"}
+                                {doctor.is_profile_complete
+                                  ? "Book Appointment"
+                                  : "Not Available"}
                               </Button>
                             </Link>
                           </div>
-                          
+
                           <div className="flex items-center gap-2 text-xs text-gray-500">
                             <MapPin className="w-3 h-3" />
-                            <span>Available: {doctor.available_days?.join(", ") || "Flexible schedule"}</span>
+                            <span>
+                              Available:{" "}
+                              {doctor.available_days?.join(", ") ||
+                                "Flexible schedule"}
+                            </span>
                           </div>
                         </div>
                       </CardContent>
@@ -443,22 +478,27 @@ export default function BrowseDoctors() {
               <div className="space-y-6">
                 <div className="text-center">
                   <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                    Available on {new Date(selectedDate).toLocaleDateString('en-US', { 
-                      weekday: 'long', 
-                      year: 'numeric', 
-                      month: 'long', 
-                      day: 'numeric' 
+                    Available on{" "}
+                    {new Date(selectedDate).toLocaleDateString("en-US", {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
                     })}
                   </h2>
                   <p className="text-gray-600">
-                    {getDoctorsByDate(selectedDate).length} doctor{getDoctorsByDate(selectedDate).length !== 1 ? 's' : ''} available
+                    {getDoctorsByDate(selectedDate).length} doctor
+                    {getDoctorsByDate(selectedDate).length !== 1
+                      ? "s"
+                      : ""}{" "}
+                    available
                   </p>
                 </div>
 
                 <div className="grid lg:grid-cols-2 xl:grid-cols-3 gap-6">
                   {getDoctorsByDate(selectedDate).map((doctor) => (
-                    <Card 
-                      key={doctor.id} 
+                    <Card
+                      key={doctor.id}
                       className="border-0 shadow-lg hover:shadow-2xl transition-all duration-500 group hover:scale-[1.02] bg-white/90 backdrop-blur-sm overflow-hidden"
                     >
                       <CardContent className="p-0">
@@ -473,7 +513,7 @@ export default function BrowseDoctors() {
                                   .join("")}
                               </AvatarFallback>
                             </Avatar>
-                            
+
                             <div className="flex-1 min-w-0">
                               <h3 className="text-xl font-bold text-gray-900 truncate">
                                 {doctor.user_name}
@@ -483,7 +523,9 @@ export default function BrowseDoctors() {
                               </p>
                               <div className="flex items-center gap-2 mt-1">
                                 <Award className="w-4 h-4 text-amber-500" />
-                                <span className="text-sm text-gray-600">{doctor.qualification}</span>
+                                <span className="text-sm text-gray-600">
+                                  {doctor.qualification}
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -492,11 +534,18 @@ export default function BrowseDoctors() {
                         {/* Doctor Details */}
                         <div className="px-6 pb-4 space-y-3">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-1">
+                            <Link
+                              href={`/customer/doctors/${doctor.id}/reviews`}
+                              className="flex items-center gap-1 group-hover:text-blue-700 transition-colors"
+                            >
                               <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                              <span className="font-semibold text-gray-900">4.8</span>
-                              <span className="text-gray-500 text-sm">(150+)</span>
-                            </div>
+                              <span className="font-semibold text-gray-900">
+                                {(doctor.avg_rating ?? 0).toFixed(1)}
+                              </span>
+                              <span className="text-gray-500 text-sm">
+                                ({doctor.review_count ?? 0})
+                              </span>
+                            </Link>
                             <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">
                               Available
                             </Badge>
@@ -512,15 +561,18 @@ export default function BrowseDoctors() {
                         <div className="bg-gray-50/80 p-4 border-t">
                           <div className="flex items-center justify-between mb-3">
                             <div>
-                              <p className="text-xs text-gray-500">Consultation Fee</p>
+                              <p className="text-xs text-gray-500">
+                                Consultation Fee
+                              </p>
                               <p className="text-xl font-bold text-green-600">
                                 Rs {doctor.consultation_fee}
                               </p>
                             </div>
-                            <Link href={`/customer/book/${doctor.id}`} className="flex-1 ml-4">
-                              <Button
-                                className="w-full bg-blue-600 hover:bg-blue-700 h-11 font-semibold shadow-lg transition-all duration-300 hover:shadow-blue-200"
-                              >
+                            <Link
+                              href={`/customer/book/${doctor.id}`}
+                              className="flex-1 ml-4"
+                            >
+                              <Button className="w-full bg-blue-600 hover:bg-blue-700 h-11 font-semibold shadow-lg transition-all duration-300 hover:shadow-blue-200">
                                 Book Appointment
                               </Button>
                             </Link>
