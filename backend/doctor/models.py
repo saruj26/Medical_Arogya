@@ -72,3 +72,23 @@ class DoctorTip(models.Model):
 
     def __str__(self):
         return f"{self.title} — {self.doctor}"
+
+
+class DoctorReview(models.Model):
+    """Patient review for a doctor.
+
+    Stored with a reference to the DoctorProfile and (optionally) the
+    authenticated User who posted it. Rating is 1-5 (integer).
+    """
+    doctor = models.ForeignKey(DoctorProfile, on_delete=models.CASCADE, related_name='reviews')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviews')
+    rating = models.PositiveSmallIntegerField(default=5)
+    comment = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        user_label = self.user.name if self.user else 'Anonymous'
+        return f"Review {self.rating} by {user_label} for {self.doctor}"

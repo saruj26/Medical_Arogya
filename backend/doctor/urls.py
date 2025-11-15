@@ -9,4 +9,6 @@ urlpatterns = [
     # Tips for customers
     path('tips/', views.DoctorTipsListCreateView.as_view(), name='doctor-tips-list-create'),
     path('tips/<int:pk>/', views.DoctorTipDetailView.as_view(), name='doctor-tip-detail'),
+    # Reviews for a doctor (list + create)
+    path('<int:doctor_id>/reviews/', views.DoctorReviewsView.as_view(), name='doctor-reviews'),
 ]

@@ -12,6 +12,8 @@ from .models import DoctorProfile
 from .serializers import DoctorProfileSerializer, DoctorCreateSerializer
 from .models import DoctorTip
 from .serializers_tips import DoctorTipSerializer, DoctorTipCreateSerializer
+from .models import DoctorReview
+from .serializers import DoctorReviewSerializer, DoctorReviewCreateSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -305,3 +307,41 @@ class DoctorTipDetailView(APIView):
 
         tip.delete()
         return Response({'success': True, 'message': 'Tip deleted'})
+
+
+class DoctorReviewsView(APIView):
+    """GET: list reviews for a doctor (public).
+       POST: add a review (authenticated customers only).
+    """
+    permission_classes = [AllowAny]
+
+    def get_doctor(self, doctor_id):
+        try:
+            return DoctorProfile.objects.get(pk=doctor_id)
+        except DoctorProfile.DoesNotExist:
+            return None
+
+    def get(self, request, doctor_id):
+        doctor = self.get_doctor(doctor_id)
+        if not doctor:
+            return Response({'success': False, 'message': 'Doctor not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        reviews = DoctorReview.objects.filter(doctor=doctor)
+        serializer = DoctorReviewSerializer(reviews, many=True)
+        return Response({'success': True, 'reviews': serializer.data})
+
+    def post(self, request, doctor_id):
+        # Only logged-in customers may post reviews
+        if not request.user.is_authenticated or getattr(request.user, 'role', None) != 'customer':
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        doctor = self.get_doctor(doctor_id)
+        if not doctor:
+            return Response({'success': False, 'message': 'Doctor not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = DoctorReviewCreateSerializer(data=request.data)
+        if serializer.is_valid():
+            review = serializer.save(doctor=doctor, user=request.user)
+            return Response({'success': True, 'review': DoctorReviewSerializer(review).data}, status=status.HTTP_201_CREATED)
+
+        return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
