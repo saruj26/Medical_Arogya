@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
 import { AuthModal } from "@/components/auth/auth-modal";
 import {
   Stethoscope,
@@ -37,60 +39,7 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      {/* Header */}
-      <header className="border-b bg-white/90 backdrop-blur-md sticky top-0 z-40 shadow-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#1656a4] to-[#1656a4]/80 rounded-xl flex items-center justify-center shadow-lg">
-              <Stethoscope className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <span className="text-2xl font-bold text-[#1656a4]">Arogya</span>
-              <div className="text-xs text-gray-500 -mt-1">
-                Professional Healthcare
-              </div>
-            </div>
-          </Link>
-          <nav className="hidden md:flex items-center gap-8">
-            <Link
-              href="/"
-              className="text-gray-600 hover:text-[#1656a4] transition-colors font-medium"
-            >
-              Home
-            </Link>
-            <Link href="/about" className="text-[#1656a4] font-semibold">
-              About
-            </Link>
-            <Link
-              href="/contact"
-              className="text-gray-600 hover:text-[#1656a4] transition-colors font-medium"
-            >
-              Contact
-            </Link>
-            <Link
-              href="/guest/doctors"
-              className="text-gray-600 hover:text-[#1656a4] transition-colors font-medium"
-            >
-              Doctors
-            </Link>
-          </nav>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              onClick={() => openAuthModal("login")}
-              className="border-2 border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white bg-transparent transition-all duration-200 font-semibold"
-            >
-              Sign In
-            </Button>
-            <Button
-              onClick={() => openAuthModal("register")}
-              className="bg-gradient-to-r from-[#1656a4] to-[#1656a4]/90 hover:from-[#1656a4]/90 hover:to-[#1656a4] shadow-lg hover:shadow-xl transition-all duration-200 font-semibold"
-            >
-              Get Started
-            </Button>
-          </div>
-        </div>
-      </header>
+      <Header userType="guest" />
 
       {/* Hero Section */}
       <section className="py-24 px-4 relative overflow-hidden">
@@ -189,6 +138,8 @@ export default function AboutPage() {
                 description:
                   "We treat every patient with empathy, understanding, and genuine care for their wellbeing.",
                 color: "red",
+                gradient: "from-red-100 to-red-50",
+                iconColor: "text-red-600"
               },
               {
                 icon: Award,
@@ -196,6 +147,8 @@ export default function AboutPage() {
                 description:
                   "We maintain the highest standards in medical care and continuously strive for improvement.",
                 color: "yellow",
+                gradient: "from-yellow-100 to-yellow-50",
+                iconColor: "text-yellow-600"
               },
               {
                 icon: Shield,
@@ -203,6 +156,8 @@ export default function AboutPage() {
                 description:
                   "We operate with transparency, honesty, and ethical practices in all our interactions.",
                 color: "green",
+                gradient: "from-green-100 to-green-50",
+                iconColor: "text-green-600"
               },
               {
                 icon: Users,
@@ -210,6 +165,8 @@ export default function AboutPage() {
                 description:
                   "We work together as a team to provide comprehensive and coordinated healthcare solutions.",
                 color: "blue",
+                gradient: "from-blue-100 to-blue-50",
+                iconColor: "text-blue-600"
               },
             ].map((value, index) => (
               <Card
@@ -218,10 +175,10 @@ export default function AboutPage() {
               >
                 <CardContent className="p-8">
                   <div
-                    className={`w-20 h-20 bg-gradient-to-br from-${value.color}-100 to-${value.color}-50 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg`}
+                    className={`w-20 h-20 bg-gradient-to-br ${value.gradient} rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg`}
                   >
                     <value.icon
-                      className={`w-10 h-10 text-${value.color}-600`}
+                      className={`w-10 h-10 ${value.iconColor}`}
                     />
                   </div>
                   <h3 className="text-xl font-bold mb-4">{value.title}</h3>
@@ -257,6 +214,8 @@ export default function AboutPage() {
                   description:
                     "Our doctors are highly qualified specialists with years of experience in their respective fields.",
                   color: "green",
+                  gradient: "from-green-100 to-green-50",
+                  iconColor: "text-green-600"
                 },
                 {
                   icon: Clock,
@@ -264,6 +223,8 @@ export default function AboutPage() {
                   description:
                     "Round-the-clock support and emergency services to ensure you get help when you need it most.",
                   color: "blue",
+                  gradient: "from-blue-100 to-blue-50",
+                  iconColor: "text-blue-600"
                 },
                 {
                   icon: Shield,
@@ -271,6 +232,8 @@ export default function AboutPage() {
                   description:
                     "Your health information is protected with enterprise-grade security and strict privacy protocols.",
                   color: "purple",
+                  gradient: "from-purple-100 to-purple-50",
+                  iconColor: "text-purple-600"
                 },
                 {
                   icon: Award,
@@ -278,14 +241,16 @@ export default function AboutPage() {
                   description:
                     "We maintain the highest standards of medical care with regular quality assessments and improvements.",
                   color: "orange",
+                  gradient: "from-orange-100 to-orange-50",
+                  iconColor: "text-orange-600"
                 },
               ].map((feature, index) => (
                 <div key={index} className="flex items-start gap-6">
                   <div
-                    className={`w-16 h-16 bg-gradient-to-br from-${feature.color}-100 to-${feature.color}-50 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg`}
+                    className={`w-16 h-16 bg-gradient-to-br ${feature.gradient} rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg`}
                   >
                     <feature.icon
-                      className={`w-8 h-8 text-${feature.color}-600`}
+                      className={`w-8 h-8 ${feature.iconColor}`}
                     />
                   </div>
                   <div>
@@ -312,13 +277,12 @@ export default function AboutPage() {
                   Experience the difference that quality healthcare makes in
                   your life.
                 </p>
-                <Button
-                  onClick={() => openAuthModal("register")}
-                  className="bg-gradient-to-r from-[#1656a4] to-[#1656a4]/90 hover:from-[#1656a4]/90 hover:to-[#1656a4] h-14 px-10 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
-                >
-                  Get Started Today
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
+                <Link href="/auth?mode=register">
+                  <Button className="bg-gradient-to-r from-[#1656a4] to-[#1656a4]/90 hover:from-[#1656a4]/90 hover:to-[#1656a4] h-14 px-10 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105">
+                    Get Started Today
+                    <ArrowRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </Link>
               </div>
             </div>
           </div>
@@ -359,101 +323,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16 px-4">
-        <div className="container mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#1656a4] to-[#1656a4]/80 rounded-xl flex items-center justify-center">
-                  <Stethoscope className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <span className="text-2xl font-bold">Arogya</span>
-                  <div className="text-xs text-gray-400 -mt-1">
-                    Professional Healthcare
-                  </div>
-                </div>
-              </div>
-              <p className="text-gray-400 leading-relaxed">
-                Professional healthcare services with modern technology and
-                experienced doctors.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-6 text-lg">Quick Links</h3>
-              <ul className="space-y-3 text-gray-400">
-                <li>
-                  <Link href="/" className="hover:text-white transition-colors">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/about"
-                    className="hover:text-white transition-colors"
-                  >
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-white transition-colors"
-                  >
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/guest/doctors"
-                    className="hover:text-white transition-colors"
-                  >
-                    Doctors
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-6 text-lg">Services</h3>
-              <ul className="space-y-3 text-gray-400">
-                <li className="hover:text-white transition-colors cursor-pointer">
-                  General Consultation
-                </li>
-                <li className="hover:text-white transition-colors cursor-pointer">
-                  Specialist Care
-                </li>
-                <li className="hover:text-white transition-colors cursor-pointer">
-                  Health Checkups
-                </li>
-                <li className="hover:text-white transition-colors cursor-pointer">
-                  Online Prescriptions
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-6 text-lg">Contact</h3>
-              <ul className="space-y-3 text-gray-400">
-                <li className="flex items-center gap-2">
-                  <span>📞</span> +91 98765 43210
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>✉️</span> info@Arogya.com
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>📍</span> 123 Health Street, Medical City
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>
-              &copy; 2024 Arogya. All rights reserved. | Professional Healthcare
-              Platform
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* Auth Modal */}
       <AuthModal

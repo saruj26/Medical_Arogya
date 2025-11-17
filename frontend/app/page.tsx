@@ -8,8 +8,10 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardContent,
 } from "@/components/ui/card";
-import { AuthModal } from "@/components/auth/auth-modal";
+import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
 import {
   Calendar,
   Clock,
@@ -19,154 +21,128 @@ import {
   Heart,
   Sparkles,
   ArrowRight,
+  Star,
+  Award,
+  CheckCircle,
+  MapPin,
+  Phone,
+  Mail,
+  ShieldCheck,
+  FileText,
+  Video,
+  MessageCircle,
 } from "lucide-react";
 
 export default function HomePage() {
-  const [authModal, setAuthModal] = useState<{
-    isOpen: boolean;
-    mode: "login" | "register";
-  }>({
-    isOpen: false,
-    mode: "login",
-  });
-
-  const openAuthModal = (mode: "login" | "register") => {
-    setAuthModal({ isOpen: true, mode });
-  };
-
-  const closeAuthModal = () => {
-    setAuthModal({ isOpen: false, mode: "login" });
-  };
+  const specialties = [
+    "Cardiology", "Dermatology", "Neurology", "Pediatrics", 
+    "Orthopedics", "Dentistry", "Ophthalmology", "Gynecology"
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-50">
-      {/* Header */}
-      <header className="border-b bg-white/90 backdrop-blur-md sticky top-0 z-40 shadow-sm">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-[#1656a4] to-[#1656a4]/80 rounded-xl flex items-center justify-center shadow-lg">
-              <Stethoscope className="w-5 h-5 text-white" />
+    <div className="min-h-screen bg-white">
+      <Header userType="guest" />
+
+      {/* Premium Hero Section with Hospital Banner */}
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+        {/* Premium Background Banner Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+          style={{
+            backgroundImage: 'url("https://images.unsplash.com/photo-1551601651-2a8555f1a136?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80")',
+          }}
+        >
+          {/* Sophisticated Gradient Overlay */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#1656a4]/80 via-[#1656a4]/60 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
+        </div>
+
+        {/* Premium Content */}
+        <div className="container mx-auto px-6 relative z-10">
+          <div className="max-w-2xl">
+            <div className="inline-flex items-center gap-3 bg-white/20 backdrop-blur-lg text-white px-5 py-3 rounded-full text-sm font-semibold mb-8 border border-white/30 shadow-lg">
+              <Sparkles className="w-4 h-4" />
+              <span>Premium Healthcare Experience</span>
+              <Award className="w-4 h-4 ml-2" />
             </div>
-            <div>
-              <span className="text-lg sm:text-2xl font-bold text-[#1656a4]">
-                Arogya
+
+            <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold text-white mb-6 leading-tight">
+              Excellence in{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-cyan-200">
+                Medical Care
               </span>
-              <div className="text-xs text-gray-500 -mt-1 hidden sm:block">
-                Professional Healthcare
-              </div>
+            </h1>
+
+            <p className="text-xl sm:text-2xl text-white/90 mb-10 leading-relaxed font-light">
+              Where cutting-edge technology meets compassionate care. 
+              Experience personalized healthcare with our team of renowned specialists 
+              in a state-of-the-art medical facility.
+            </p>
+
+            {/* Premium CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-16">
+              <Link href="/auth?mode=register">
+                <Button
+                  size="lg"
+                  className="bg-white text-[#1656a4] hover:bg-white/95 px-10 py-6 text-lg font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 border-0 rounded-2xl"
+                >
+                  <Calendar className="w-5 h-5 mr-3" />
+                  Book Premium Consultation
+                  <ArrowRight className="w-5 h-5 ml-3" />
+                </Button>
+              </Link>
+              <Link href="/guest/doctors">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-white text-white hover:bg-white hover:text-[#1656a4] px-10 py-6 text-lg font-semibold bg-transparent backdrop-blur-sm transition-all duration-300 transform hover:scale-105 rounded-2xl"
+                >
+                  <Users className="w-5 h-5 mr-3" />
+                  Meet Our Specialists
+                </Button>
+              </Link>
             </div>
-          </div>
 
-          <nav className="hidden lg:flex items-center gap-6">
-            <Link
-              href="#services"
-              className="text-gray-600 hover:text-[#1656a4] transition-all duration-200 font-medium"
-            >
-              Services
-            </Link>
-            <Link
-              href="/guest/doctors"
-              className="text-gray-600 hover:text-[#1656a4] transition-all duration-200 font-medium"
-            >
-              Doctors
-            </Link>
-            <Link
-              href="/about"
-              className="text-gray-600 hover:text-[#1656a4] transition-all duration-200 font-medium"
-            >
-              About
-            </Link>
-            <Link
-              href="/contact"
-              className="text-gray-600 hover:text-[#1656a4] transition-all duration-200 font-medium"
-            >
-              Contact
-            </Link>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => openAuthModal("login")}
-              className="border-2 border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white bg-transparent transition-all duration-200 font-semibold text-xs sm:text-sm px-2 sm:px-4"
-            >
-              Sign In
-            </Button>
-            <Button
-              size="sm"
-              onClick={() => openAuthModal("register")}
-              className="bg-gradient-to-r from-[#1656a4] to-[#1656a4]/90 hover:from-[#1656a4]/90 hover:to-[#1656a4] shadow-lg hover:shadow-xl transition-all duration-200 font-semibold text-xs sm:text-sm px-2 sm:px-4"
-            >
-              Get Started
-            </Button>
+            {/* Premium Trust Indicators */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-3xl">
+              {[
+                { icon: Award, label: "JCI Accredited", value: "Quality" },
+                { icon: ShieldCheck, label: "ISO Certified", value: "Safety" },
+                { icon: Star, label: "5-Star Rating", value: "Excellence" },
+                { icon: Users, label: "50+ Specialists", value: "Expertise" },
+              ].map((item, index) => (
+                <div key={index} className="text-white text-center bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+                  <item.icon className="w-8 h-8 mx-auto mb-2 text-blue-200" />
+                  <div className="text-sm font-semibold text-blue-100">{item.value}</div>
+                  <div className="text-xs text-white/80">{item.label}</div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </header>
 
-      {/* Hero Section */}
-      <section className="py-12 sm:py-24 px-4 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-50/50 to-transparent"></div>
-        <div className="container mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 bg-[#1656a4]/10 text-[#1656a4] px-3 py-1 rounded-full text-xs sm:text-sm font-medium mb-4 sm:mb-6">
-            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-            Professional Healthcare Platform
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-gray-900 mb-4 sm:mb-6 leading-tight px-2">
-            Your Health, Our{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#1656a4] to-blue-600">
-              Priority
-            </span>
-          </h1>
-
-          <p className="text-base sm:text-xl md:text-2xl text-gray-600 mb-6 sm:mb-10 max-w-3xl mx-auto leading-relaxed px-4">
-            Book appointments with qualified doctors, manage your health
-            records, and get prescriptions online. Professional healthcare at
-            your fingertips.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center px-4">
-            <Button
-              size="lg"
-              onClick={() => openAuthModal("register")}
-              className="w-full sm:w-auto bg-gradient-to-r from-[#1656a4] to-[#1656a4]/90 hover:from-[#1656a4]/90 hover:to-[#1656a4] px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
-            >
-              Book Appointment Now
-              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 ml-2" />
-            </Button>
-            <Link href="/guest/doctors">
-              <Button
-                size="lg"
-                variant="outline"
-                className="w-full sm:w-auto border-2 border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold bg-white/80 backdrop-blur-sm transition-all duration-300 transform hover:scale-105"
-              >
-                View Our Doctors
-              </Button>
-            </Link>
-          </div>
-
-          <div className="mt-8 sm:mt-12 text-xs sm:text-sm text-gray-500 px-4">
-            ✨ Trusted by 1,000+ patients • 100+ expert doctors • 24/7 support
+        {/* Premium Scroll Indicator */}
+        <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+          <div className="w-8 h-12 border-2 border-white/80 rounded-full flex justify-center">
+            <div className="w-1 h-4 bg-white/80 rounded-full mt-2"></div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section id="services" className="py-24 px-4 bg-white relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-gray-50/50 to-white"></div>
-        <div className="container mx-auto relative z-10">
+      {/* Premium Features Section */}
+      <section id="services" className="py-24 px-6 bg-gradient-to-b from-gray-50 to-white">
+        <div className="container mx-auto">
           <div className="text-center mb-20">
-            <div className="inline-flex items-center gap-2 bg-[#1656a4]/10 text-[#1656a4] px-4 py-2 rounded-full text-sm font-medium mb-6">
-              <Heart className="w-4 h-4" />
-              Why Choose Arogya
+            <div className="inline-flex items-center gap-3 bg-[#1656a4]/10 text-[#1656a4] px-6 py-3 rounded-full text-sm font-semibold mb-6 border border-[#1656a4]/20">
+              <Heart className="w-5 h-5" />
+              Premium Healthcare Services
             </div>
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Comprehensive Healthcare Solutions
+              Unparalleled Medical Excellence
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We provide modern technology and experienced professionals to
-              deliver exceptional healthcare experiences.
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
+              Discover our comprehensive range of premium healthcare services designed 
+              to provide you with the best possible medical care experience.
             </p>
           </div>
 
@@ -174,246 +150,201 @@ export default function HomePage() {
             {[
               {
                 icon: Calendar,
-                title: "Easy Booking",
-                description:
-                  "Book appointments with your preferred doctors in just a few clicks",
-                color: "blue",
+                title: "Priority Appointments",
+                description: "Get immediate access to our top specialists with minimal waiting time",
+                features: ["Same-day appointments", "Flexible scheduling", "Priority access"],
+                color: "from-blue-500 to-blue-600"
               },
               {
-                icon: Clock,
-                title: "Flexible Timing",
-                description:
-                  "Choose from available time slots that fit your schedule",
-                color: "green",
+                icon: Video,
+                title: "Virtual Consultations",
+                description: "Premium telehealth services with high-definition video calls",
+                features: ["HD video calls", "Secure platform", "Digital prescriptions"],
+                color: "from-green-500 to-green-600"
               },
               {
-                icon: Shield,
-                title: "Secure & Private",
-                description:
-                  "Your health data is protected with enterprise-grade security",
-                color: "purple",
+                icon: FileText,
+                title: "Digital Health Records",
+                description: "Comprehensive electronic health records accessible anytime, anywhere",
+                features: ["Lifetime access", "Real-time updates", "Secure sharing"],
+                color: "from-purple-500 to-purple-600"
               },
               {
                 icon: Users,
-                title: "Expert Doctors",
-                description:
-                  "Qualified and experienced doctors across various specialties",
-                color: "orange",
+                title: "Specialist Team",
+                description: "Collaborative care from our multidisciplinary team of experts",
+                features: ["Multiple specialists", "Team approach", "Comprehensive care"],
+                color: "from-orange-500 to-orange-600"
               },
               {
-                icon: Heart,
-                title: "Health Records",
-                description:
-                  "Maintain digital health records and prescription history",
-                color: "red",
+                icon: ShieldCheck,
+                title: "Advanced Security",
+                description: "Military-grade encryption for your sensitive health information",
+                features: ["End-to-end encryption", "HIPAA compliant", "Regular audits"],
+                color: "from-red-500 to-red-600"
               },
               {
-                icon: Stethoscope,
-                title: "Online Prescriptions",
-                description:
-                  "Get digital prescriptions and medical advice online",
-                color: "indigo",
+                icon: MessageCircle,
+                title: "24/7 Support",
+                description: "Round-the-clock medical support and consultation services",
+                features: ["24/7 helpline", "Quick responses", "Emergency support"],
+                color: "from-cyan-500 to-cyan-600"
               },
             ].map((feature, index) => (
               <Card
                 key={index}
-                className="border-2 hover:border-[#1656a4]/50 transition-all duration-300 hover:shadow-xl transform hover:-translate-y-1 bg-white/80 backdrop-blur-sm"
+                className="border border-gray-200 hover:border-[#1656a4]/30 transition-all duration-500 hover:shadow-2xl transform hover:-translate-y-2 bg-white group overflow-hidden"
               >
-                <CardHeader className="text-center p-8">
-                  <div
-                    className={`w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-gradient-to-br from-${feature.color}-100 to-${feature.color}-50`}
-                  >
-                    <feature.icon
-                      className={`w-8 h-8 text-${feature.color}-600`}
-                    />
+                <CardHeader className="text-center p-0">
+                  <div className={`h-2 bg-gradient-to-r ${feature.color}`}></div>
+                  <div className="p-8">
+                    <div className={`w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-gradient-to-br ${feature.color} text-white group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                      <feature.icon className="w-8 h-8" />
+                    </div>
+                    <CardTitle className="text-2xl mb-4 text-gray-900 font-bold">
+                      {feature.title}
+                    </CardTitle>
+                    <CardDescription className="text-gray-600 leading-relaxed text-base mb-6">
+                      {feature.description}
+                    </CardDescription>
                   </div>
-                  <CardTitle className="text-xl mb-4">
-                    {feature.title}
-                  </CardTitle>
-                  <CardDescription className="text-gray-600 leading-relaxed">
-                    {feature.description}
-                  </CardDescription>
                 </CardHeader>
+                <CardContent className="px-8 pb-8 pt-0">
+                  <ul className="space-y-3">
+                    {feature.features.map((item, idx) => (
+                      <li key={idx} className="flex items-center gap-3 text-sm text-gray-600">
+                        <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
               </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-24 px-4 bg-gradient-to-r from-[#1656a4] to-[#1656a4]/90 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-black/10 to-transparent"></div>
+      {/* Premium Stats Section */}
+      <section className="py-24 px-6 bg-gradient-to-br from-[#1656a4] via-[#1e4a8a] to-[#1656a4] text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]"></div>
         <div className="container mx-auto relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Trusted by Thousands
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Setting New Standards in Healthcare
             </h2>
-            <p className="text-blue-100 text-lg">
-              Join our growing community of satisfied patients
+            <p className="text-blue-100 text-xl max-w-2xl mx-auto">
+              Our commitment to excellence is reflected in our outstanding performance metrics and patient satisfaction rates.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-8 text-center">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {[
-              { number: "10,000+", label: "Happy Patients", icon: "👥" },
-              { number: "100+", label: "Expert Doctors", icon: "👨‍⚕️" },
-              { number: "24/7", label: "Support Available", icon: "🕐" },
-              { number: "Rs 500", label: "Consultation Fee", icon: "💰" },
+              { number: "25,000+", label: "Successful Treatments", icon: "🎯", suffix: "Procedures" },
+              { number: "99.2%", label: "Patient Satisfaction", icon: "⭐", suffix: "Rating" },
+              { number: "150+", label: "Medical Experts", icon: "👨‍⚕️", suffix: "Specialists" },
+              { number: "24/7", label: "Emergency Care", icon: "🚑", suffix: "Available" },
             ].map((stat, index) => (
               <div
                 key={index}
-                className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 hover:bg-white/20 transition-all duration-300"
+                className="bg-white/10 backdrop-blur-lg rounded-3xl p-10 hover:bg-white/20 transition-all duration-500 hover:scale-105 border border-white/10 text-center"
               >
-                <div className="text-4xl mb-4">{stat.icon}</div>
-                <div className="text-4xl md:text-5xl font-bold mb-2">
+                <div className="text-5xl mb-6">{stat.icon}</div>
+                <div className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-br from-white to-blue-100 bg-clip-text text-transparent">
                   {stat.number}
                 </div>
-                <div className="text-blue-100 font-medium">{stat.label}</div>
+                <div className="text-blue-100 font-semibold text-lg mb-2">{stat.label}</div>
+                <div className="text-blue-200 text-sm">{stat.suffix}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 px-4 bg-gradient-to-br from-gray-50 to-white">
-        <div className="container mx-auto text-center">
-          <div className="max-w-4xl mx-auto">
+      {/* Medical Specialties Section */}
+      <section className="py-24 px-6 bg-white">
+        <div className="container mx-auto">
+          <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Ready to Take Control of Your Health?
+              Comprehensive Medical Specialties
             </h2>
-            <p className="text-xl text-gray-600 mb-10 leading-relaxed">
-              Join thousands of satisfied patients who trust Arogya for their
-              healthcare needs. Book your first appointment today and experience
-              the difference.
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Access world-class care across a wide range of medical specialties with our team of board-certified physicians.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                onClick={() => openAuthModal("register")}
-                className="bg-gradient-to-r from-[#1656a4] to-[#1656a4]/90 hover:from-[#1656a4]/90 hover:to-[#1656a4] px-10 py-4 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:scale-105"
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+            {specialties.map((specialty, index) => (
+              <div
+                key={index}
+                className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 text-center border border-gray-200 hover:border-[#1656a4]/50 hover:shadow-xl transition-all duration-300 group cursor-pointer"
               >
-                Get Started Today
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => openAuthModal("login")}
-                className="border-2 border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white px-10 py-4 text-lg font-semibold transition-all duration-300 transform hover:scale-105"
-              >
-                Already Have Account?
-              </Button>
+                <div className="w-12 h-12 bg-[#1656a4]/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-[#1656a4] transition-colors duration-300">
+                  <Stethoscope className="w-6 h-6 text-[#1656a4] group-hover:text-white transition-colors duration-300" />
+                </div>
+                <h3 className="font-semibold text-gray-900 group-hover:text-[#1656a4] transition-colors duration-300">
+                  {specialty}
+                </h3>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Premium CTA Section */}
+      <section className="py-24 px-6 bg-gradient-to-br from-gray-900 via-[#1656a4] to-gray-900 text-white relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]"></div>
+        <div className="container mx-auto text-center relative z-10">
+          <div className="max-w-4xl mx-auto">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <Sparkles className="w-4 h-4" />
+              Limited Time Offer
+            </div>
+            
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Begin Your Journey to Better Health
+            </h2>
+            
+            <p className="text-xl text-blue-100 mb-10 leading-relaxed max-w-2xl mx-auto">
+              Experience the difference of premium healthcare. Schedule your first consultation today and receive a comprehensive health assessment from our expert team.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
+              <Link href="/auth?mode=register">
+                <Button
+                  size="lg"
+                  className="bg-white text-gray-900 hover:bg-white/95 px-12 py-6 text-lg font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 border-0 rounded-2xl"
+                >
+                  <Calendar className="w-5 h-5 mr-3" />
+                  Schedule Premium Consultation
+                  <ArrowRight className="w-5 h-5 ml-3" />
+                </Button>
+              </Link>
+            </div>
+
+            {/* Contact Information */}
+            <div className="grid md:grid-cols-3 gap-8 max-w-2xl mx-auto text-center">
+              <div className="flex flex-col items-center">
+                <Phone className="w-6 h-6 text-blue-200 mb-3" />
+                <div className="text-blue-100 text-sm">Emergency Line</div>
+                <div className="text-white font-semibold">+1 (555) 123-HELP</div>
+              </div>
+              <div className="flex flex-col items-center">
+                <Mail className="w-6 h-6 text-blue-200 mb-3" />
+                <div className="text-blue-100 text-sm">Email Us</div>
+                <div className="text-white font-semibold">care@arogya.com</div>
+              </div>
+              <div className="flex flex-col items-center">
+                <MapPin className="w-6 h-6 text-blue-200 mb-3" />
+                <div className="text-blue-100 text-sm">Visit Us</div>
+                <div className="text-white font-semibold">24/7 Available</div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16 px-4">
-        <div className="container mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-[#1656a4] to-[#1656a4]/80 rounded-xl flex items-center justify-center">
-                  <Stethoscope className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <span className="text-2xl font-bold">Arogya</span>
-                  <div className="text-xs text-gray-400 -mt-1">
-                    Professional Healthcare
-                  </div>
-                </div>
-              </div>
-              <p className="text-gray-400 leading-relaxed">
-                Professional healthcare services with modern technology and
-                experienced doctors.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-6 text-lg">Services</h3>
-              <ul className="space-y-3 text-gray-400">
-                <li className="hover:text-white transition-colors cursor-pointer">
-                  General Consultation
-                </li>
-                <li className="hover:text-white transition-colors cursor-pointer">
-                  Specialist Care
-                </li>
-                <li className="hover:text-white transition-colors cursor-pointer">
-                  Health Checkups
-                </li>
-                <li className="hover:text-white transition-colors cursor-pointer">
-                  Online Prescriptions
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-6 text-lg">Quick Links</h3>
-              <ul className="space-y-3 text-gray-400">
-                <li>
-                  <Link
-                    href="/about"
-                    className="hover:text-white transition-colors"
-                  >
-                    About Us
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-white transition-colors"
-                  >
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/guest/doctors"
-                    className="hover:text-white transition-colors"
-                  >
-                    Our Doctors
-                  </Link>
-                </li>
-                <li>
-                  <button
-                    onClick={() => openAuthModal("login")}
-                    className="hover:text-white transition-colors"
-                  >
-                    Sign In
-                  </button>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-6 text-lg">Contact</h3>
-              <ul className="space-y-3 text-gray-400">
-                <li className="flex items-center gap-2">
-                  <span>📞</span> +94 21 343 3433
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>✉️</span> info@Arogya.com
-                </li>
-                <li className="flex items-center gap-2">
-                  <span>📍</span> 123 Nelliyady Karaveddy.
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-            <p>
-              &copy; 2024 Arogya. All rights reserved. | Professional Healthcare
-              Platform
-            </p>
-          </div>
-        </div>
-      </footer>
-
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={authModal.isOpen}
-        onClose={closeAuthModal}
-        initialMode={authModal.mode}
-      />
+      <Footer />
     </div>
   );
 }

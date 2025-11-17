@@ -16,6 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import Header from "@/components/layout/header";
+import Footer from "@/components/layout/footer";
 import {
   Stethoscope,
   MapPin,
@@ -54,55 +56,7 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-[#1656a4] rounded-lg flex items-center justify-center">
-              <Stethoscope className="w-5 h-5 text-white" />
-            </div>
-            <span className="text-xl font-bold text-[#1656a4]">Arogya</span>
-          </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="/"
-              className="text-gray-600 hover:text-[#1656a4] transition-colors"
-            >
-              Home
-            </Link>
-            <Link
-              href="/about"
-              className="text-gray-600 hover:text-[#1656a4] transition-colors"
-            >
-              About
-            </Link>
-            <Link href="/contact" className="text-[#1656a4] font-medium">
-              Contact
-            </Link>
-            <Link
-              href="/guest/doctors"
-              className="text-gray-600 hover:text-[#1656a4] transition-colors"
-            >
-              Doctors
-            </Link>
-          </nav>
-          <div className="flex items-center gap-3">
-            <Link href="/auth">
-              <Button
-                variant="outline"
-                className="border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white bg-transparent"
-              >
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/auth?mode=register">
-              <Button className="bg-[#1656a4] hover:bg-[#1656a4]/90">
-                Register
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header userType="guest" />
 
       {/* Hero Section */}
       <section className="py-20 px-4">
@@ -144,11 +98,11 @@ export default function ContactPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-4">Call Us</h3>
                 <p className="text-gray-600">
-                  Emergency: +91 98765 43210
+                  Emergency: +94 21 343 3433
                   <br />
-                  Appointments: +91 98765 43211
+                  Appointments: +94 21 343 3434
                   <br />
-                  General: +91 98765 43212
+                  General: +94 21 343 3435
                 </p>
               </CardContent>
             </Card>
@@ -160,11 +114,11 @@ export default function ContactPage() {
                 </div>
                 <h3 className="text-xl font-bold mb-4">Email Us</h3>
                 <p className="text-gray-600">
-                  info@Arogya.com
+                  info@arogya.com
                   <br />
-                  appointments@Arogya.com
+                  appointments@arogya.com
                   <br />
-                  support@Arogya.com
+                  support@arogya.com
                 </p>
               </CardContent>
             </Card>
@@ -266,7 +220,7 @@ export default function ContactPage() {
                           onChange={(e) =>
                             setFormData({ ...formData, phone: e.target.value })
                           }
-                          placeholder="+91 98765 43210"
+                          placeholder="+94 21 343 3433"
                           className="mt-2 h-12 border-2 focus:border-[#1656a4]"
                         />
                       </div>
@@ -352,7 +306,7 @@ export default function ContactPage() {
                     <div className="text-center text-gray-500">
                       <MapPin className="w-12 h-12 mx-auto mb-4" />
                       <p>Interactive Map</p>
-                      <p className="text-sm">123 Health Street, Medical City</p>
+                      <p className="text-sm">123 Nelliyady Karaveddy</p>
                     </div>
                   </div>
                 </CardContent>
@@ -368,7 +322,7 @@ export default function ContactPage() {
                       24/7 Emergency Hotline
                     </h3>
                     <p className="text-2xl font-bold text-red-600 mb-2">
-                      +91 98765 43210
+                      +94 21 343 3433
                     </p>
                     <p className="text-red-700 text-sm">
                       For medical emergencies, call immediately or visit our
@@ -403,79 +357,7 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12 px-4">
-        <div className="container mx-auto">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 bg-[#1656a4] rounded-lg flex items-center justify-center">
-                  <Stethoscope className="w-5 h-5 text-white" />
-                </div>
-                <span className="text-xl font-bold">Arogya</span>
-              </div>
-              <p className="text-gray-400">
-                Professional healthcare services with modern technology and
-                experienced doctors.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Quick Links</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>
-                  <Link href="/" className="hover:text-white transition-colors">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/about"
-                    className="hover:text-white transition-colors"
-                  >
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/contact"
-                    className="hover:text-white transition-colors"
-                  >
-                    Contact
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href="/guest/doctors"
-                    className="hover:text-white transition-colors"
-                  >
-                    Doctors
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Services</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>General Consultation</li>
-                <li>Specialist Care</li>
-                <li>Health Checkups</li>
-                <li>Online Prescriptions</li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-semibold mb-4">Contact</h3>
-              <ul className="space-y-2 text-gray-400">
-                <li>📞 +91 98765 43210</li>
-                <li>✉️ info@Arogya.com</li>
-                <li>📍 123 Health Street, Medical City</li>
-              </ul>
-            </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Arogya. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

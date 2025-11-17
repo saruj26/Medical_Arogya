@@ -36,6 +36,30 @@ export default function CustomerLayout({
     setMounted(true);
   }, []);
 
+  // Prevent browser from restoring scroll position on refresh/navigation which
+  // can cause unexpected jumps on some pages (especially when dynamic content loads).
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if ("scrollRestoration" in window.history) {
+        window.history.scrollRestoration = "manual";
+      }
+      window.scrollTo(0, 0);
+    } catch (e) {
+      // ignore
+    }
+
+    return () => {
+      try {
+        if ("scrollRestoration" in window.history) {
+          window.history.scrollRestoration = "auto";
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, []);
+
   const tab =
     searchParams?.get("tab") ||
     (pathname?.includes("/customer/settings")
@@ -267,10 +291,114 @@ export default function CustomerLayout({
         </aside>
 
         {/* Main content - Scrollable area. On large screens add left margin to avoid overlap with fixed sidebar */}
-        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50/30 lg:ml-64 min-h-0">
-          <div className="w-full px-4 sm:px-4 lg:px-4 xl:px-4 py-3 sm:py-4 max-w-8xl mx-auto">
+        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50/30 lg:ml-64 min-h-0 flex flex-col">
+          <div className="flex-1 w-full px-4 sm:px-4 lg:px-4 xl:px-4 py-3 sm:py-4 max-w-8xl mx-auto">
             {children}
           </div>
+          
+          {/* Footer */}
+          <footer className="bg-gray-900 text-white py-8 px-4 mt-auto">
+            <div className="container mx-auto">
+              <div className="grid md:grid-cols-4 gap-8">
+                <div>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#1656a4] to-[#1656a4]/80 rounded-xl flex items-center justify-center">
+                      <Stethoscope className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <span className="text-2xl font-bold">Arogya</span>
+                      <div className="text-xs text-gray-400 -mt-1">
+                        Professional Healthcare
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-gray-400 leading-relaxed text-sm">
+                    Professional healthcare services with modern technology and
+                    experienced doctors. Your health is our priority.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-6 text-lg">Services</h3>
+                  <ul className="space-y-3 text-gray-400">
+                    <li className="hover:text-white transition-colors cursor-pointer">
+                      General Consultation
+                    </li>
+                    <li className="hover:text-white transition-colors cursor-pointer">
+                      Specialist Care
+                    </li>
+                    <li className="hover:text-white transition-colors cursor-pointer">
+                      Health Checkups
+                    </li>
+                    <li className="hover:text-white transition-colors cursor-pointer">
+                      Online Prescriptions
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-6 text-lg">Quick Links</h3>
+                  <ul className="space-y-3 text-gray-400">
+                    <li>
+                      <Link
+                        href="/about"
+                        className="hover:text-white transition-colors"
+                      >
+                        About Us
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/contact"
+                        className="hover:text-white transition-colors"
+                      >
+                        Contact
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/guest/doctors"
+                        className="hover:text-white transition-colors"
+                      >
+                        Our Doctors
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        href="/"
+                        className="hover:text-white transition-colors"
+                      >
+                        Sign In
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="font-semibold mb-6 text-lg">Contact Info</h3>
+                  <ul className="space-y-3 text-gray-400">
+                    <li className="flex items-center gap-2">
+                      <span>📞</span> +94 21 343 3433
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span>✉️</span> info@arogya.com
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span>📍</span> 123 Nelliyady, Karaveddy
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span>🕒</span> 24/7 Emergency Support
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
+                <p className="text-sm">
+                  &copy; {new Date().getFullYear()} Arogya. All rights reserved. | Professional Healthcare Platform
+                </p>
+                <p className="text-xs mt-2 text-gray-500">
+                  Committed to providing quality healthcare services
+                </p>
+              </div>
+            </div>
+          </footer>
         </main>
       </div>
     </div>
