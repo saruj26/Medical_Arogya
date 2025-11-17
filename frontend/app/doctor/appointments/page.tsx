@@ -170,14 +170,14 @@ export default function DoctorAppointmentsPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Header Section */}
-        <div className="bg-white rounded-2xl shadow-sm border border-blue-100 p-6">
+        <div className="bg-gradient-to-r from-blue-600 to-cyan-600 text-white p-6">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-                <Stethoscope className="w-8 h-8 text-blue-600" />
+              <h1 className="text-2xl font-bold text-white flex items-center gap-3">
+                <Stethoscope className="w-8 h-8 text-white" />
                 Patient Appointments
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-white mt-2">
                 Manage and track all your patient appointments in one place
               </p>
             </div>
@@ -198,7 +198,7 @@ export default function DoctorAppointmentsPage() {
             </div>
           </div>
         </div>
-
+        
         {/* Stats Summary */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Total Appointments Card */}
