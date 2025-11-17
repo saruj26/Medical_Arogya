@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { FileText, Phone, Clock, Loader2 } from "lucide-react";
+import { FileText, Phone, Clock, Calendar, User, Loader2, Filter, Stethoscope } from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
@@ -27,25 +27,30 @@ interface Appointment {
 export default function DoctorAppointmentsPage() {
   const router = useRouter();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>("confirmed");
 
   useEffect(() => {
-    fetchAppointments();
-  }, [selectedStatus]);
+    fetchAllAppointments();
+  }, []);
 
-  const fetchAppointments = async () => {
+  useEffect(() => {
+    if (selectedStatus && allAppointments.length > 0) {
+      filterAppointments();
+    } else {
+      setAppointments(allAppointments);
+    }
+  }, [selectedStatus, allAppointments]);
+
+  const fetchAllAppointments = async () => {
     try {
       setLoading(true);
+      setStatsLoading(true);
       const token = localStorage.getItem("token");
-      const today = new Date().toISOString().split("T")[0];
 
-      let url = `/api/appointment/appointments/`;
-      if (selectedStatus) {
-        url += `?status=${selectedStatus}`;
-      }
-
-      const response = await fetch(api(url), {
+      const response = await fetch(api('/api/appointment/appointments/'), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -54,6 +59,7 @@ export default function DoctorAppointmentsPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
+          setAllAppointments(data.appointments || []);
           setAppointments(data.appointments || []);
         }
       }
@@ -61,7 +67,37 @@ export default function DoctorAppointmentsPage() {
       console.error("Error fetching appointments:", error);
     } finally {
       setLoading(false);
+      setStatsLoading(false);
     }
+  };
+
+  const filterAppointments = () => {
+    if (!selectedStatus) {
+      setAppointments(allAppointments);
+    } else {
+      const filtered = allAppointments.filter(
+        appointment => appointment.status === selectedStatus
+      );
+      setAppointments(filtered);
+    }
+  };
+
+  const getStatusCounts = () => {
+    const counts = {
+      pending: 0,
+      confirmed: 0,
+      completed: 0,
+      cancelled: 0,
+      total: allAppointments.length
+    };
+
+    allAppointments.forEach(appointment => {
+      if (counts.hasOwnProperty(appointment.status)) {
+        counts[appointment.status as keyof Omit<typeof counts, 'total'>]++;
+      }
+    });
+
+    return counts;
   };
 
   const handleAddPrescription = (appointmentId: number) => {
@@ -83,142 +119,314 @@ export default function DoctorAppointmentsPage() {
     }
   };
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "confirmed":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "completed":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "pending":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    const baseClasses = "w-5 h-5";
+    switch (status) {
+      case "confirmed":
+        return <Calendar className={`${baseClasses} text-blue-600`} />;
+      case "completed":
+        return <User className={`${baseClasses} text-green-600`} />;
+      case "pending":
+        return <Clock className={`${baseClasses} text-yellow-600`} />;
+      case "cancelled":
+        return <FileText className={`${baseClasses} text-red-600`} />;
+      default:
+        return <User className={`${baseClasses} text-gray-600`} />;
+    }
+  };
+
+  const statusCounts = getStatusCounts();
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-[#1656a4]" />
-          <p className="text-gray-600">Loading appointments...</p>
+          <div className="relative">
+            <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
+            <Stethoscope className="w-6 h-6 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+          </div>
+          <p className="text-gray-600 mt-4 font-medium">Loading appointments...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">All Appointments</h2>
-        <div className="flex gap-2">
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="px-3 py-2 border rounded-md text-sm"
-          >
-            <option value="">All Status</option>
-            <option value="pending">Pending</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="grid gap-4">
-        {appointments.length === 0 ? (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No Appointments Found
-              </h3>
-              <p className="text-gray-600">
-                {selectedStatus
-                  ? `No ${selectedStatus} appointments found`
-                  : "No appointments found"}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50 p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header Section */}
+        <div className="bg-white rounded-2xl shadow-sm border border-blue-100 p-6">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <Stethoscope className="w-8 h-8 text-blue-600" />
+                Patient Appointments
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Manage and track all your patient appointments in one place
               </p>
+            </div>
+            
+            <div className="flex items-center gap-3 bg-blue-50 rounded-lg px-4 py-2">
+              <Filter className="w-5 h-5 text-blue-600" />
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-gray-700"
+              >
+                <option value="">All Appointments</option>
+                <option value="pending">Pending</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          {/* Total Appointments Card */}
+          <Card className="bg-white border-l-4 border-l-blue-500 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Appointments</p>
+                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                    {statsLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                    ) : (
+                      statusCounts.total
+                    )}
+                  </p>
+                </div>
+                <div className="w-10 h-10 rounded-full flex items-center justify-center bg-blue-100 text-blue-600">
+                  <Stethoscope className="w-5 h-5" />
+                </div>
+              </div>
             </CardContent>
           </Card>
-        ) : (
-          appointments.map((appointment) => (
-            <Card
-              key={appointment.id}
-              className="hover:shadow-lg transition-shadow"
-            >
-              <CardContent className="p-6">
-                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-                  <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4">
-                    <Avatar className="w-10 h-10 sm:w-12 sm:h-12 mx-auto sm:mx-0">
-                      <AvatarFallback>
-                        {appointment.patient_name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 text-center sm:text-left">
-                      <h3 className="font-semibold text-base sm:text-lg">
-                        {appointment.patient_name}
-                      </h3>
-                      <div className="text-xs sm:text-sm text-gray-600 space-y-1">
-                        <p>
-                          Age: {appointment.patient_age} • Gender:{" "}
-                          {appointment.patient_gender}
-                        </p>
-                        <p className="flex items-center justify-center sm:justify-start gap-1">
-                          <Phone className="w-3 h-3" />
-                          {appointment.patient_phone}
-                        </p>
-                        <p>
-                          <strong>Appointment ID:</strong>{" "}
-                          {appointment.appointment_id}
-                        </p>
-                        <p>
-                          <strong>Date:</strong>{" "}
-                          {new Date(
-                            appointment.appointment_date
-                          ).toLocaleDateString()}
-                        </p>
-                        <p>
-                          <strong>Reason:</strong> {appointment.reason}
-                        </p>
-                        {appointment.symptoms && (
-                          <p>
-                            <strong>Symptoms:</strong> {appointment.symptoms}
-                          </p>
-                        )}
-                        <p>
-                          <strong>Fee:</strong> Rs{" "}
-                          {appointment.consultation_fee}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
 
-                  <div className="text-center lg:text-right">
-                    <div className="flex items-center justify-center lg:justify-end gap-2 mb-2">
-                      <Clock className="w-4 h-4 text-gray-500" />
-                      <span className="font-medium">
-                        {appointment.appointment_time}
-                      </span>
-                    </div>
-                    <Badge
-                      variant={getStatusVariant(appointment.status)}
-                      className="mb-3 capitalize"
-                    >
-                      {appointment.status}
-                    </Badge>
-                    <div className="space-y-2">
-                      <Button
-                        size="sm"
-                        className="w-full bg-[#1656a4] hover:bg-[#1656a4]/90"
-                        onClick={() => handleAddPrescription(appointment.id)}
-                        disabled={
-                          appointment.status === "completed" ||
-                          appointment.status === "cancelled"
-                        }
-                      >
-                        <FileText className="w-4 h-4 mr-2" />
-                        {appointment.status === "completed"
-                          ? "Prescription Added"
-                          : "Add Prescription"}
-                      </Button>
-                    </div>
+          {/* Status Cards */}
+          {["pending", "confirmed", "completed", "cancelled"].map((status) => (
+            <Card 
+              key={status} 
+              className={`bg-white border-l-4 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
+                selectedStatus === status ? 'ring-2 ring-blue-300' : ''
+              } ${
+                status === 'pending' ? 'border-l-yellow-500' :
+                status === 'confirmed' ? 'border-l-blue-500' :
+                status === 'completed' ? 'border-l-green-500' :
+                'border-l-red-500'
+              }`}
+              onClick={() => setSelectedStatus(selectedStatus === status ? '' : status)}
+            >
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 capitalize">{status}</p>
+                    <p className="text-2xl font-bold text-gray-900 mt-1">
+                      {statsLoading ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                      ) : (
+                        statusCounts[status as keyof Omit<typeof statusCounts, 'total'>]
+                      )}
+                    </p>
+                  </div>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
+                    status === 'confirmed' ? 'bg-blue-100 text-blue-600' :
+                    status === 'completed' ? 'bg-green-100 text-green-600' :
+                    'bg-red-100 text-red-600'
+                  }`}>
+                    {getStatusIcon(status)}
                   </div>
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
+          ))}
+        </div>
+
+        {/* Appointments List */}
+        <div className="space-y-4">
+          {appointments.length === 0 ? (
+            <Card className="bg-white rounded-2xl shadow-sm border border-blue-100">
+              <CardContent className="p-12 text-center">
+                <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Calendar className="w-10 h-10 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                  No Appointments Found
+                </h3>
+                <p className="text-gray-600 max-w-md mx-auto">
+                  {selectedStatus
+                    ? `You don't have any ${selectedStatus} appointments at the moment.`
+                    : "You don't have any appointments scheduled yet."}
+                </p>
+                {selectedStatus && (
+                  <Button 
+                    onClick={() => setSelectedStatus('')}
+                    className="mt-4 bg-blue-600 hover:bg-blue-700"
+                  >
+                    View All Appointments
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              {/* Results Count */}
+              <div className="bg-white rounded-lg px-4 py-3 shadow-sm border border-blue-100">
+                <p className="text-sm text-gray-600">
+                  Showing <span className="font-semibold text-gray-900">{appointments.length}</span> 
+                  {selectedStatus ? ` ${selectedStatus}` : ''} appointment(s)
+                  {selectedStatus && (
+                    <span>
+                      {' '}out of <span className="font-semibold text-gray-900">{statusCounts.total}</span> total
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              {/* Appointments */}
+              {appointments.map((appointment) => (
+                <Card
+                  key={appointment.id}
+                  className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 border border-blue-100 hover:border-blue-200"
+                >
+                  <CardContent className="p-6">
+                    <div className="flex flex-col lg:flex-row gap-6">
+                      {/* Patient Info Section */}
+                      <div className="flex-1">
+                        <div className="flex items-start gap-4">
+                          <Avatar className="w-14 h-14 border-2 border-blue-100 shadow-sm">
+                            <AvatarFallback className="bg-blue-100 text-blue-800 font-semibold">
+                              {appointment.patient_name
+                                .split(" ")
+                                .map((n) => n[0])
+                                .join("")}
+                            </AvatarFallback>
+                          </Avatar>
+                          
+                          <div className="flex-1">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <h3 className="text-lg font-bold text-gray-900">
+                                {appointment.patient_name}
+                              </h3>
+                              <Badge
+                                variant={getStatusVariant(appointment.status)}
+                                className={`capitalize px-3 py-1 rounded-full ${getStatusColor(appointment.status)} border`}
+                              >
+                                {appointment.status}
+                              </Badge>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <User className="w-4 h-4 text-blue-600" />
+                                  <span>Age: {appointment.patient_age} • {appointment.patient_gender}</span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Phone className="w-4 h-4 text-blue-600" />
+                                  <span>{appointment.patient_phone}</span>
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  <span className="font-medium">ID:</span> {appointment.appointment_id}
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Calendar className="w-4 h-4 text-blue-600" />
+                                  <span>
+                                    {new Date(appointment.appointment_date).toLocaleDateString('en-US', {
+                                      weekday: 'short',
+                                      year: 'numeric',
+                                      month: 'short',
+                                      day: 'numeric'
+                                    })}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2 text-sm text-gray-600">
+                                  <Clock className="w-4 h-4 text-blue-600" />
+                                  <span className="font-medium">{appointment.appointment_time}</span>
+                                </div>
+                                <div className="text-sm text-gray-600">
+                                  <span className="font-medium">Fee:</span> Rs {appointment.consultation_fee}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Medical Information */}
+                            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <h4 className="font-semibold text-sm text-gray-700 mb-1">Reason for Visit</h4>
+                                  <p className="text-sm text-gray-600">{appointment.reason}</p>
+                                </div>
+                                {appointment.symptoms && (
+                                  <div>
+                                    <h4 className="font-semibold text-sm text-gray-700 mb-1">Symptoms</h4>
+                                    <p className="text-sm text-gray-600">{appointment.symptoms}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Section */}
+                      <div className="lg:w-48 flex flex-col justify-between gap-4">
+                        <div className="text-center lg:text-right">
+                          <div className="inline-flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                            <Clock className="w-4 h-4" />
+                            {appointment.appointment_time}
+                          </div>
+                        </div>
+                        
+                        <Button
+                          size="sm"
+                          className={`w-full font-medium rounded-lg transition-all duration-200 ${
+                            appointment.status === "completed" || appointment.status === "cancelled"
+                              ? "bg-gray-100 text-gray-500 hover:bg-gray-100 cursor-not-allowed"
+                              : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md"
+                          }`}
+                          onClick={() => handleAddPrescription(appointment.id)}
+                          disabled={
+                            appointment.status === "completed" ||
+                            appointment.status === "cancelled"
+                          }
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          {appointment.status === "completed"
+                            ? "Prescription Added"
+                            : "Add Prescription"}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
