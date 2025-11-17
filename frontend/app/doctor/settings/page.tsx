@@ -64,6 +64,10 @@ export default function DoctorSettings() {
     bio: "",
     consultation_fee: 500,
   });
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
+    null
+  );
   const [notifications, setNotifications] = useState({
     appointments: true,
     reminders: true,
@@ -112,6 +116,7 @@ export default function DoctorSettings() {
             bio: data.profile.bio || "",
             consultation_fee: data.profile.consultation_fee || 500,
           });
+          setProfileImagePreview(data.profile.profile_image || null);
         }
       }
     } catch (error) {
@@ -127,13 +132,24 @@ export default function DoctorSettings() {
     try {
       const token = localStorage.getItem("token");
 
+      // Use FormData to allow file upload for profile image
+      const formData = new FormData();
+      Object.entries(profileForm).forEach(([key, value]) => {
+        if (value !== null && typeof value !== "undefined") {
+          formData.append(key, String(value));
+        }
+      });
+      if (profileImageFile) {
+        formData.append("profile_image", profileImageFile);
+      }
+
+      const headers: any = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const response = await fetch(api(`/api/doctor/doctor/profile/`), {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(profileForm),
+        headers,
+        body: formData,
       });
 
       if (response.ok) {
@@ -144,6 +160,7 @@ export default function DoctorSettings() {
             text: "Profile updated successfully!",
           });
           setDoctorProfile(data.profile);
+          setProfileImagePreview(data.profile.profile_image || null);
         } else {
           setMessage({
             type: "error",
@@ -164,6 +181,19 @@ export default function DoctorSettings() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setProfileImageFile(file);
+      try {
+        const url = URL.createObjectURL(file);
+        setProfileImagePreview(url);
+      } catch (err) {
+        setProfileImagePreview(null);
+      }
     }
   };
 
@@ -551,6 +581,40 @@ export default function DoctorSettings() {
                     This bio will be visible to patients when they view your
                     profile
                   </p>
+                </div>
+                {/* Profile Image Upload */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-semibold flex items-center gap-2">
+                    <User className="w-4 h-4 text-blue-600" />
+                    Profile Photo
+                  </Label>
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 bg-gray-100 rounded-full overflow-hidden flex items-center justify-center border">
+                      {profileImagePreview ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={profileImagePreview}
+                          alt="profile"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-xs text-gray-500">No image</div>
+                      )}
+                    </div>
+                    <div>
+                      <input
+                        id="profile_image"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="text-sm"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Upload a professional photo (JPG, PNG). Max 5MB
+                        recommended.
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 <Button
                   onClick={handleProfileUpdate}

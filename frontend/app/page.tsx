@@ -35,8 +35,14 @@ import {
 
 export default function HomePage() {
   const specialties = [
-    "Cardiology", "Dermatology", "Neurology", "Pediatrics", 
-    "Orthopedics", "Dentistry", "Ophthalmology", "Gynecology"
+    "Cardiology",
+    "Dermatology",
+    "Neurology",
+    "Pediatrics",
+    "Orthopedics",
+    "Dentistry",
+    "Ophthalmology",
+    "Gynecology",
   ];
 
   return (
@@ -46,10 +52,11 @@ export default function HomePage() {
       {/* Premium Hero Section with Hospital Banner */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Premium Background Banner Image */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: 'url("https://images.unsplash.com/photo-1551601651-2a8555f1a136?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80")',
+            backgroundImage:
+              'url("https://images.unsplash.com/photo-1551601651-2a8555f1a136?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80")',
           }}
         >
           {/* Sophisticated Gradient Overlay */}
@@ -74,9 +81,9 @@ export default function HomePage() {
             </h1>
 
             <p className="text-xl sm:text-2xl text-white/90 mb-10 leading-relaxed font-light">
-              Where cutting-edge technology meets compassionate care. 
-              Experience personalized healthcare with our team of renowned specialists 
-              in a state-of-the-art medical facility.
+              Where cutting-edge technology meets compassionate care. Experience
+              personalized healthcare with our team of renowned specialists in a
+              state-of-the-art medical facility.
             </p>
 
             {/* Premium CTA Buttons */}
@@ -111,9 +118,14 @@ export default function HomePage() {
                 { icon: Star, label: "5-Star Rating", value: "Excellence" },
                 { icon: Users, label: "50+ Specialists", value: "Expertise" },
               ].map((item, index) => (
-                <div key={index} className="text-white text-center bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20">
+                <div
+                  key={index}
+                  className="text-white text-center bg-white/10 backdrop-blur-lg rounded-2xl p-4 border border-white/20"
+                >
                   <item.icon className="w-8 h-8 mx-auto mb-2 text-blue-200" />
-                  <div className="text-sm font-semibold text-blue-100">{item.value}</div>
+                  <div className="text-sm font-semibold text-blue-100">
+                    {item.value}
+                  </div>
                   <div className="text-xs text-white/80">{item.label}</div>
                 </div>
               ))}
@@ -130,7 +142,10 @@ export default function HomePage() {
       </section>
 
       {/* Premium Features Section */}
-      <section id="services" className="py-24 px-6 bg-gradient-to-b from-gray-50 to-white">
+      <section
+        id="services"
+        className="py-24 px-6 bg-gradient-to-b from-gray-50 to-white"
+      >
         <div className="container mx-auto">
           <div className="text-center mb-20">
             <div className="inline-flex items-center gap-3 bg-[#1656a4]/10 text-[#1656a4] px-6 py-3 rounded-full text-sm font-semibold mb-6 border border-[#1656a4]/20">
@@ -141,8 +156,9 @@ export default function HomePage() {
               Unparalleled Medical Excellence
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Discover our comprehensive range of premium healthcare services designed 
-              to provide you with the best possible medical care experience.
+              Discover our comprehensive range of premium healthcare services
+              designed to provide you with the best possible medical care
+              experience.
             </p>
           </div>
 
@@ -151,44 +167,74 @@ export default function HomePage() {
               {
                 icon: Calendar,
                 title: "Priority Appointments",
-                description: "Get immediate access to our top specialists with minimal waiting time",
-                features: ["Same-day appointments", "Flexible scheduling", "Priority access"],
-                color: "from-blue-500 to-blue-600"
+                description:
+                  "Get immediate access to our top specialists with minimal waiting time",
+                features: [
+                  "Same-day appointments",
+                  "Flexible scheduling",
+                  "Priority access",
+                ],
+                color: "from-blue-500 to-blue-600",
               },
               {
                 icon: Video,
                 title: "Virtual Consultations",
-                description: "Premium telehealth services with high-definition video calls",
-                features: ["HD video calls", "Secure platform", "Digital prescriptions"],
-                color: "from-green-500 to-green-600"
+                description:
+                  "Premium telehealth services with high-definition video calls",
+                features: [
+                  "HD video calls",
+                  "Secure platform",
+                  "Digital prescriptions",
+                ],
+                color: "from-green-500 to-green-600",
               },
               {
                 icon: FileText,
                 title: "Digital Health Records",
-                description: "Comprehensive electronic health records accessible anytime, anywhere",
-                features: ["Lifetime access", "Real-time updates", "Secure sharing"],
-                color: "from-purple-500 to-purple-600"
+                description:
+                  "Comprehensive electronic health records accessible anytime, anywhere",
+                features: [
+                  "Lifetime access",
+                  "Real-time updates",
+                  "Secure sharing",
+                ],
+                color: "from-purple-500 to-purple-600",
               },
               {
                 icon: Users,
                 title: "Specialist Team",
-                description: "Collaborative care from our multidisciplinary team of experts",
-                features: ["Multiple specialists", "Team approach", "Comprehensive care"],
-                color: "from-orange-500 to-orange-600"
+                description:
+                  "Collaborative care from our multidisciplinary team of experts",
+                features: [
+                  "Multiple specialists",
+                  "Team approach",
+                  "Comprehensive care",
+                ],
+                color: "from-orange-500 to-orange-600",
               },
               {
                 icon: ShieldCheck,
                 title: "Advanced Security",
-                description: "Military-grade encryption for your sensitive health information",
-                features: ["End-to-end encryption", "HIPAA compliant", "Regular audits"],
-                color: "from-red-500 to-red-600"
+                description:
+                  "Military-grade encryption for your sensitive health information",
+                features: [
+                  "End-to-end encryption",
+                  "HIPAA compliant",
+                  "Regular audits",
+                ],
+                color: "from-red-500 to-red-600",
               },
               {
                 icon: MessageCircle,
                 title: "24/7 Support",
-                description: "Round-the-clock medical support and consultation services",
-                features: ["24/7 helpline", "Quick responses", "Emergency support"],
-                color: "from-cyan-500 to-cyan-600"
+                description:
+                  "Round-the-clock medical support and consultation services",
+                features: [
+                  "24/7 helpline",
+                  "Quick responses",
+                  "Emergency support",
+                ],
+                color: "from-cyan-500 to-cyan-600",
               },
             ].map((feature, index) => (
               <Card
@@ -196,9 +242,13 @@ export default function HomePage() {
                 className="border border-gray-200 hover:border-[#1656a4]/30 transition-all duration-500 hover:shadow-2xl transform hover:-translate-y-2 bg-white group overflow-hidden"
               >
                 <CardHeader className="text-center p-0">
-                  <div className={`h-2 bg-gradient-to-r ${feature.color}`}></div>
+                  <div
+                    className={`h-2 bg-gradient-to-r ${feature.color}`}
+                  ></div>
                   <div className="p-8">
-                    <div className={`w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-gradient-to-br ${feature.color} text-white group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                    <div
+                      className={`w-16 h-16 mx-auto mb-6 rounded-2xl flex items-center justify-center bg-gradient-to-br ${feature.color} text-white group-hover:scale-110 transition-transform duration-300 shadow-lg`}
+                    >
                       <feature.icon className="w-8 h-8" />
                     </div>
                     <CardTitle className="text-2xl mb-4 text-gray-900 font-bold">
@@ -212,7 +262,10 @@ export default function HomePage() {
                 <CardContent className="px-8 pb-8 pt-0">
                   <ul className="space-y-3">
                     {feature.features.map((item, idx) => (
-                      <li key={idx} className="flex items-center gap-3 text-sm text-gray-600">
+                      <li
+                        key={idx}
+                        className="flex items-center gap-3 text-sm text-gray-600"
+                      >
                         <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                         {item}
                       </li>
@@ -226,41 +279,85 @@ export default function HomePage() {
       </section>
 
       {/* Premium Stats Section */}
-      <section className="py-24 px-6 bg-gradient-to-br from-[#1656a4] via-[#1e4a8a] to-[#1656a4] text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]"></div>
+      {/* Elegant Stats Section */}
+      {/* Elegant Stats Section with Icons */}
+      <section className="py-16 px-6 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white relative overflow-hidden">
+        {/* Background Effects */}
+        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:30px_30px]"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-cyan-500/10"></div>
+
         <div className="container mx-auto relative z-10">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Setting New Standards in Healthcare
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium mb-6 border border-white/20">
+              <Sparkles className="w-4 h-4" />
+              Excellence in Healthcare
+            </div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4 text-white">
+              Setting New Standards
             </h2>
-            <p className="text-blue-100 text-xl max-w-2xl mx-auto">
-              Our commitment to excellence is reflected in our outstanding performance metrics and patient satisfaction rates.
+            <p className="text-blue-100 text-base max-w-lg mx-auto leading-relaxed">
+              Our commitment to excellence is reflected in outstanding
+              performance metrics.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
             {[
-              { number: "25,000+", label: "Successful Treatments", icon: "🎯", suffix: "Procedures" },
-              { number: "99.2%", label: "Patient Satisfaction", icon: "⭐", suffix: "Rating" },
-              { number: "150+", label: "Medical Experts", icon: "👨‍⚕️", suffix: "Specialists" },
-              { number: "24/7", label: "Emergency Care", icon: "🚑", suffix: "Available" },
+              {
+                number: "25K+",
+                label: "Treatments",
+                description: "Successful",
+                icon: "🎯",
+                color: "text-blue-300",
+              },
+              {
+                number: "99.2%",
+                label: "Satisfaction",
+                description: "Patient Rating",
+                icon: "⭐",
+                color: "text-amber-300",
+              },
+              {
+                number: "150+",
+                label: "Experts",
+                description: "Medical Specialists",
+                icon: "👨‍⚕️",
+                color: "text-emerald-300",
+              },
+              {
+                number: "24/7",
+                label: "Care",
+                description: "Emergency Available",
+                icon: "🚑",
+                color: "text-red-300",
+              },
             ].map((stat, index) => (
               <div
                 key={index}
-                className="bg-white/10 backdrop-blur-lg rounded-3xl p-10 hover:bg-white/20 transition-all duration-500 hover:scale-105 border border-white/10 text-center"
+                className="group relative bg-white/5 backdrop-blur-md rounded-xl p-6 min-h-[180px] hover:bg-white/10 transition-all duration-300 border border-white/10 hover:border-white/20 hover:scale-105"
               >
-                <div className="text-5xl mb-6">{stat.icon}</div>
-                <div className="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-br from-white to-blue-100 bg-clip-text text-transparent">
-                  {stat.number}
+                {/* Content */}
+                <div className="text-center space-y-3">
+                  <div className="text-2xl mb-1 transform group-hover:scale-110 transition-transform duration-300">
+                    {stat.icon}
+                  </div>
+                  <div className="text-2xl md:text-2xl font-bold text-white leading-tight">
+                    {stat.number}
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-blue-100 font-semibold text-sm leading-tight">
+                      {stat.label}
+                    </div>
+                    <div className="text-blue-200 text-xs opacity-80">
+                      {stat.description}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-blue-100 font-semibold text-lg mb-2">{stat.label}</div>
-                <div className="text-blue-200 text-sm">{stat.suffix}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
-
       {/* Medical Specialties Section */}
       <section className="py-24 px-6 bg-white">
         <div className="container mx-auto">
@@ -269,7 +366,8 @@ export default function HomePage() {
               Comprehensive Medical Specialties
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Access world-class care across a wide range of medical specialties with our team of board-certified physicians.
+              Access world-class care across a wide range of medical specialties
+              with our team of board-certified physicians.
             </p>
           </div>
 
@@ -300,13 +398,15 @@ export default function HomePage() {
               <Sparkles className="w-4 h-4" />
               Limited Time Offer
             </div>
-            
+
             <h2 className="text-4xl md:text-5xl font-bold mb-6">
               Begin Your Journey to Better Health
             </h2>
-            
+
             <p className="text-xl text-blue-100 mb-10 leading-relaxed max-w-2xl mx-auto">
-              Experience the difference of premium healthcare. Schedule your first consultation today and receive a comprehensive health assessment from our expert team.
+              Experience the difference of premium healthcare. Schedule your
+              first consultation today and receive a comprehensive health
+              assessment from our expert team.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
@@ -327,7 +427,9 @@ export default function HomePage() {
               <div className="flex flex-col items-center">
                 <Phone className="w-6 h-6 text-blue-200 mb-3" />
                 <div className="text-blue-100 text-sm">Emergency Line</div>
-                <div className="text-white font-semibold">+1 (555) 123-HELP</div>
+                <div className="text-white font-semibold">
+                  +1 (555) 123-HELP
+                </div>
               </div>
               <div className="flex flex-col items-center">
                 <Mail className="w-6 h-6 text-blue-200 mb-3" />
