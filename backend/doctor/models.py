@@ -22,6 +22,8 @@ class DoctorProfile(models.Model):
     qualification = models.TextField(blank=True, default='')
     license_number = models.CharField(max_length=100, blank=True)
     bio = models.TextField(blank=True)
+    # Optional profile image stored under MEDIA_ROOT/doctor_images/
+    profile_image = models.ImageField(upload_to='doctor_images/', null=True, blank=True)
     available_days = models.JSONField(default=list, blank=True)
     available_time_slots = models.JSONField(default=list, blank=True)
     consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=500.00)

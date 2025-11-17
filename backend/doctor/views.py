@@ -1,6 +1,7 @@
 
 from rest_framework import status
 from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.mail import send_mail
@@ -24,7 +25,7 @@ class DoctorListView(APIView):
 
     def get(self, request):
         doctors = DoctorProfile.objects.select_related('user').all()
-        serializer = DoctorProfileSerializer(doctors, many=True)
+        serializer = DoctorProfileSerializer(doctors, many=True, context={'request': request})
 
         return Response({
             'success': True,
@@ -81,7 +82,7 @@ Arogya Admin Team
             return Response({
                 'success': True,
                 'message': 'Doctor added successfully',
-                'doctor': DoctorProfileSerializer(doctor_profile).data,
+                'doctor': DoctorProfileSerializer(doctor_profile, context={'request': request}).data,
                 'email_sent': email_sent,
             }, status=status.HTTP_201_CREATED)
         
@@ -93,6 +94,7 @@ Arogya Admin Team
 
 class DoctorProfileView(APIView):
     permission_classes = [IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
     
     def get(self, request):
         if request.user.role != 'doctor':
@@ -103,7 +105,7 @@ class DoctorProfileView(APIView):
         
         try:
             doctor_profile = DoctorProfile.objects.get(user=request.user)
-            serializer = DoctorProfileSerializer(doctor_profile)
+            serializer = DoctorProfileSerializer(doctor_profile, context={'request': request})
 
             return Response({
                 'success': True,
@@ -134,7 +136,7 @@ class DoctorProfileView(APIView):
                     bio=''
                 )
 
-                serializer = DoctorProfileSerializer(doctor_profile)
+                serializer = DoctorProfileSerializer(doctor_profile, context={'request': request})
                 return Response({
                     'success': True,
                     'profile': serializer.data
@@ -187,7 +189,7 @@ class DoctorProfileView(APIView):
                 return Response({
                     'success': True,
                     'message': 'Profile updated successfully',
-                    'profile': DoctorProfileSerializer(updated_profile).data
+                    'profile': DoctorProfileSerializer(updated_profile, context={'request': request}).data
                 })
             
             return Response({

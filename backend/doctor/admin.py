@@ -4,7 +4,7 @@ from .models import DoctorProfile, DoctorTip, DoctorReview
 
 @admin.register(DoctorProfile)
 class DoctorProfileAdmin(admin.ModelAdmin):
-	list_display = ('doctor_id', 'user', 'specialty', 'is_profile_complete', 'created_at')
+	list_display = ('doctor_id', 'user', 'specialty', 'is_profile_complete', 'created_at', 'profile_image')
 	search_fields = ('doctor_id', 'user__email', 'user__name', 'specialty')
 
 

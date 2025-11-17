@@ -9,6 +9,7 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
     user_name = serializers.CharField(source='user.name', read_only=True)
     user_email = serializers.CharField(source='user.email', read_only=True)
     user_phone = serializers.CharField(source='user.phone', read_only=True)
+    profile_image = serializers.ImageField(required=False, allow_null=True, use_url=True)
     avg_rating = serializers.SerializerMethodField(read_only=True)
     review_count = serializers.SerializerMethodField(read_only=True)
     
@@ -16,6 +17,7 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
         model = DoctorProfile
         fields = (
             'id', 'doctor_id', 'user', 'user_name', 'user_email', 'user_phone',
+            'profile_image',
             'specialty', 'experience', 'qualification', 'license_number', 'bio',
             'available_days', 'available_time_slots', 'consultation_fee',
             'is_profile_complete', 'created_at', 'updated_at',
