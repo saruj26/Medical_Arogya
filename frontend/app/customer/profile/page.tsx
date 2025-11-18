@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/card";
 import { Loader2, Shield, User } from "lucide-react";
 import api from "@/lib/api";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -101,6 +103,18 @@ export default function ProfilePage() {
   };
 
   const handleProfileUpdate = async () => {
+    // Confirm with the user before saving
+    const confirmation = await Swal.fire({
+      title: "Save changes?",
+      text: "Do you want to save the changes to your profile?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, save",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!confirmation.isConfirmed) return;
+
     setProfileMessage(null);
     setProfileLoading(true);
     const token = localStorage.getItem("token");
@@ -132,6 +146,7 @@ export default function ProfilePage() {
 
       if (res.ok && data.success) {
         setProfileMessage("Profile updated successfully");
+        // update localStorage copy
         const stored = localStorage.getItem("user");
         if (stored) {
           try {
@@ -150,16 +165,35 @@ export default function ProfilePage() {
             console.error("Error updating localStorage:", e);
           }
         }
+
+        await Swal.fire({
+          icon: "success",
+          title: "Saved",
+          text: "Your profile has been updated.",
+          timer: 1500,
+          showConfirmButton: false,
+        });
       } else {
-        setProfileMessage(
-          data.message || data.errors
+        const errText =
+          data?.message ||
+          (data?.errors
             ? JSON.stringify(data.errors)
-            : "Failed to update profile"
-        );
+            : "Failed to update profile");
+        setProfileMessage(errText);
+        await Swal.fire({
+          icon: "error",
+          title: "Update failed",
+          text: errText,
+        });
       }
     } catch (e) {
       console.error("Profile update error:", e);
       setProfileMessage("Failed to update profile");
+      await Swal.fire({
+        icon: "error",
+        title: "Update failed",
+        text: "Failed to update profile. Please try again.",
+      });
     } finally {
       setProfileLoading(false);
     }
@@ -188,8 +222,12 @@ export default function ProfilePage() {
                   <User className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold text-gray-900">My Profile</h1>
-                  <p className="text-sm text-gray-600">Expert medical care at your fingertips</p>
+                  <h1 className="text-xl font-bold text-gray-900">
+                    My Profile
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    Expert medical care at your fingertips
+                  </p>
                 </div>
               </div>
             </div>

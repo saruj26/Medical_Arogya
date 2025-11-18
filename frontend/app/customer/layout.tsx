@@ -1,4 +1,3 @@
-
 "use client";
 
 import type React from "react";
@@ -125,9 +124,11 @@ export default function CustomerLayout({
             : "text-gray-700 hover:bg-white hover:shadow-md border-gray-200 hover:border-blue-200 bg-white/50"
         }`}
       >
-        <span className={`w-5 h-5 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
-          active ? "text-white" : "text-gray-600 group-hover:text-[#1656a4]"
-        }`}>
+        <span
+          className={`w-5 h-5 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
+            active ? "text-white" : "text-gray-600 group-hover:text-[#1656a4]"
+          }`}
+        >
           {icon}
         </span>
         <span className="truncate font-semibold">{label}</span>
@@ -155,7 +156,7 @@ export default function CustomerLayout({
                 <Menu className="w-6 h-6 text-gray-700" />
               )}
             </button>
-            
+
             {/* Enhanced Logo */}
             <Link
               href="/"
@@ -183,16 +184,16 @@ export default function CustomerLayout({
                 Premium Care
               </span>
             </div>
-            
+
             <span className="text-sm text-gray-600 font-medium hidden sm:block">
               Welcome,{" "}
               <span className="text-[#1656a4] font-semibold">
                 {userName ?? "Guest"}
               </span>
             </span>
-            
+
             <div className="h-8 w-px bg-gray-200 hidden sm:block" />
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -200,7 +201,9 @@ export default function CustomerLayout({
               className="p-2 sm:px-4 bg-white hover:bg-red-50 border border-gray-200 text-red-600 hover:text-red-700 hover:border-red-300 transition-all duration-300 rounded-xl"
             >
               <LogOut className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline text-sm font-semibold">Logout</span>
+              <span className="hidden sm:inline text-sm font-semibold">
+                Logout
+              </span>
             </Button>
           </div>
         </div>
@@ -311,7 +314,7 @@ export default function CustomerLayout({
                   handleLogout();
                   closeSidebar();
                 }}
-                className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 border border-green-200 transition-all duration-300 border-2 border-transparent hover:border-red-200 group"
+                className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium text-red-600 bg-red-100 hover:bg-red-200 border border-red-200 transition-all duration-300 border-2 border-transparent hover:border-red-200 group"
               >
                 <LogOut className="w-4 h-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
                 <span className="font-semibold">Sign Out</span>
@@ -320,18 +323,24 @@ export default function CustomerLayout({
               {/* Status Indicator */}
               <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg border border-green-200">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-xs text-green-700 font-medium">Healthcare Active</span>
+                <span className="text-xs text-green-700 font-medium">
+                  Healthcare Active
+                </span>
               </div>
             </div>
           </div>
         </aside>
 
         {/* Enhanced Main content */}
-        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 via-white to-cyan-50 lg:ml-72 min-h-0 pt-16 flex flex-col">
+        <main
+          className={`flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 via-white to-cyan-50 lg:ml-72 min-h-0 pt-16 flex flex-col transform transition-transform duration-300 ${
+            sidebarOpen ? "translate-x-72" : "translate-x-0"
+          } lg:translate-x-0`}
+        >
           <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 max-w-8xl mx-auto">
             {children}
           </div>
-          
+
           {/* Footer */}
           <footer className="bg-gray-900 text-white py-8 px-4 mt-auto">
             <div className="container mx-auto">
@@ -427,7 +436,8 @@ export default function CustomerLayout({
               </div>
               <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
                 <p className="text-sm">
-                  &copy; {new Date().getFullYear()} Arogya. All rights reserved. | Professional Healthcare Platform
+                  &copy; {new Date().getFullYear()} Arogya. All rights reserved.
+                  | Professional Healthcare Platform
                 </p>
                 <p className="text-xs mt-2 text-gray-500">
                   Committed to providing quality healthcare services
