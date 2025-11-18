@@ -1,3 +1,4 @@
+
 "use client";
 
 import type React from "react";
@@ -16,6 +17,10 @@ import {
   X,
   Heart,
   Shield,
+  Home,
+  Sparkles,
+  Zap,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Suspense } from "react";
@@ -114,29 +119,34 @@ export default function CustomerLayout({
         href={href}
         onClick={closeSidebar}
         aria-current={active ? "page" : undefined}
-        className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 border ${
+        className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-300 border-2 group ${
           active
-            ? "bg-[#1656a4] text-white shadow-md border-[#1656a4]"
-            : "text-gray-700 hover:bg-gray-50 border-transparent hover:border-gray-200"
+            ? "bg-gradient-to-r from-[#1656a4] to-cyan-600 text-white shadow-lg border-transparent"
+            : "text-gray-700 hover:bg-white hover:shadow-md border-gray-200 hover:border-blue-200 bg-white/50"
         }`}
       >
-        <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+        <span className={`w-5 h-5 flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-110 ${
+          active ? "text-white" : "text-gray-600 group-hover:text-[#1656a4]"
+        }`}>
           {icon}
         </span>
         <span className="truncate font-semibold">{label}</span>
+        {active && (
+          <div className="ml-auto w-2 h-2 bg-white rounded-full"></div>
+        )}
       </Link>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200/80 sticky top-0 z-50 shadow-sm h-16 flex items-center backdrop-blur-sm bg-white/95">
-        <div className="w-full px-4 sm:px-6 flex items-center justify-between ">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex flex-col">
+      {/* Enhanced Header */}
+      <header className="bg-white/95 backdrop-blur-xl border-b border-gray-200/80 fixed top-0 inset-x-0 z-50 shadow-sm h-16 flex items-center">
+        <div className="w-full px-4 sm:px-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              className="lg:hidden p-2 hover:bg-blue-50 rounded-xl transition-all duration-300 border border-gray-200 hover:border-blue-200"
               aria-label="Toggle sidebar"
             >
               {sidebarOpen ? (
@@ -145,37 +155,52 @@ export default function CustomerLayout({
                 <Menu className="w-6 h-6 text-gray-700" />
               )}
             </button>
-            {/* Logo */}
+            
+            {/* Enhanced Logo */}
             <Link
               href="/"
-              className="flex items-center gap-2 flex-shrink-0 hover:opacity-90 transition-opacity "
+              className="flex items-center gap-3 flex-shrink-0 hover:opacity-90 transition-opacity group"
             >
-              <div className="w-9 h-9 bg-gradient-to-br from-[#1656a4] to-[#0f3f7f] rounded-lg flex items-center justify-center shadow-sm">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#1656a4] to-cyan-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300">
                 <Stethoscope className="w-5 h-5 text-white" />
               </div>
-              <span className="text-lg font-bold text-[#1656a4] hidden sm:inline">
-                Arogya
-              </span>
+              <div className="flex flex-col">
+                <span className="text-lg font-bold bg-gradient-to-r from-[#1656a4] to-cyan-600 bg-clip-text text-transparent">
+                  Arogya
+                </span>
+                <span className="text-xs text-gray-500 -mt-1 hidden sm:block">
+                  Patient Portal
+                </span>
+              </div>
             </Link>
           </div>
 
-          {/* Header right section */}
-          <div className="flex items-center gap-2 sm:gap-4">
-            <span className="text-xs sm:text-sm text-gray-600 font-medium hidden sm:block">
+          {/* Enhanced Header right section */}
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="hidden sm:flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
+              <Shield className="w-3 h-3 text-blue-600" />
+              <span className="text-sm text-blue-700 font-medium">
+                Premium Care
+              </span>
+            </div>
+            
+            <span className="text-sm text-gray-600 font-medium hidden sm:block">
               Welcome,{" "}
               <span className="text-[#1656a4] font-semibold">
                 {userName ?? "Guest"}
               </span>
             </span>
+            
             <div className="h-8 w-px bg-gray-200 hidden sm:block" />
+            
             <Button
               variant="outline"
               size="sm"
               onClick={handleLogout}
-              className="p-2 sm:px-3 bg-white hover:bg-red-50 border border-gray-200 text-red-600 hover:text-red-700 transition-colors duration-200"
+              className="p-2 sm:px-4 bg-white hover:bg-red-50 border border-gray-200 text-red-600 hover:text-red-700 hover:border-red-300 transition-all duration-300 rounded-xl"
             >
               <LogOut className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline text-sm">Logout</span>
+              <span className="hidden sm:inline text-sm font-semibold">Logout</span>
             </Button>
           </div>
         </div>
@@ -190,9 +215,9 @@ export default function CustomerLayout({
           />
         )}
 
-        {/* Sidebar - fixed on desktop so it doesn't scroll with the page; still toggleable on mobile */}
+        {/* Enhanced Sidebar */}
         <aside
-          className={`fixed inset-y-0 left-0 w-64 bg-white border-r border-gray-200 z-40 transform transition-transform duration-300 ease-in-out flex flex-col shadow-xl lg:shadow-none ${
+          className={`fixed inset-y-0 left-0 w-72 bg-white/95 backdrop-blur-xl border-r border-gray-200/80 z-40 transform transition-transform duration-300 ease-in-out flex flex-col shadow-2xl lg:shadow-none ${
             sidebarOpen ? "translate-x-0" : "-translate-x-full"
           } lg:translate-x-0`}
           style={{
@@ -200,34 +225,35 @@ export default function CustomerLayout({
             height: "calc(100vh - 4rem)",
           }}
         >
-          {/* User profile section */}
-          <div className="p-6 border-b border-gray-200/80 bg-gradient-to-r from-blue-50 to-indigo-50 flex-shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="w-14 h-14 bg-gradient-to-br from-[#1656a4] to-[#0f3f7f] rounded-full flex items-center justify-center text-white flex-shrink-0 shadow-md">
-                <User className="w-6 h-6" />
+          {/* Enhanced User profile section */}
+          <div className="p-4 border-b border-gray-200/80 bg-gradient-to-br from-blue-50 to-cyan-50 flex-shrink-0">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-gradient-to-br from-[#1656a4] to-cyan-600 rounded-2xl flex items-center justify-center text-white flex-shrink-0 shadow-lg">
+                <User className="w-7 h-7" />
               </div>
               <div className="min-w-0 flex-1">
-                <div className="text-base font-semibold text-gray-900 truncate">
-                  {userName ?? "Patient"}
+                <div className="flex items-center gap-2 mb-1">
+                  <div className="text-base font-bold text-gray-900 truncate">
+                    {userName ?? "Patient"}
+                  </div>
+                  <Sparkles className="w-4 h-4 text-amber-500" />
                 </div>
-                <div className="text-sm text-gray-600 truncate mt-1">
-                  {userEmail ?? "guest@example.com"}
+                <div className="text-sm text-gray-600 truncate mb-2">
+                  {userEmail ?? "patient@example.com"}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Navigation items - Fixed container with proper spacing */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <nav className="p-4 space-y-2 flex-1">
-              <Suspense
-                fallback={<div className="animate-pulse">Loading...</div>}
-              >
+          {/* Enhanced Navigation */}
+          <div className="flex-1 flex flex-col overflow-hidden mt-2">
+            <nav className="py-4 px-6 space-y-3 flex-1">
+              <div className="space-y-3">
                 <NavItem
                   href="/customer"
                   value="appointments"
-                  label="My Appointments"
-                  icon={<Calendar className="w-4 h-4" />}
+                  label="Dashboard"
+                  icon={<Home className="w-4 h-4" />}
                 />
                 <NavItem
                   href="/customer/doctors"
@@ -238,9 +264,12 @@ export default function CustomerLayout({
                 <NavItem
                   href="/customer/prescription"
                   value="prescriptions"
-                  label="Prescriptions"
+                  label="My Prescriptions"
                   icon={<FileText className="w-4 h-4" />}
                 />
+              </div>
+
+              <div className="space-y-2">
                 <NavItem
                   href="/customer/tips"
                   value="tips"
@@ -259,40 +288,47 @@ export default function CustomerLayout({
                   label="My Profile"
                   icon={<User className="w-4 h-4" />}
                 />
-              </Suspense>
+              </div>
             </nav>
 
-            {/* Sidebar footer - Always visible at bottom */}
-            <div className="p-4 border-t border-gray-200/80 bg-gray-50/80 space-y-2 flex-shrink-0 mt-auto">
+            {/* Enhanced Sidebar footer */}
+            <div className="px-6 py-10 border-t border-gray-200/80 bg-gradient-to-b from-white to-gray-50/80 space-y-3 flex-shrink-0 mt-auto">
               <Link
                 href="/customer/settings"
                 onClick={closeSidebar}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 border ${
+                className={`flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 border-2 group ${
                   tab === "settings"
-                    ? "bg-[#1656a4] text-white shadow-md border-[#1656a4]"
-                    : "text-gray-700 hover:bg-white hover:shadow-sm border-transparent hover:border-gray-200"
+                    ? "bg-gradient-to-r from-[#1656a4] to-cyan-600 text-white shadow-lg border-transparent"
+                    : "text-gray-700 hover:bg-white hover:shadow-md border-gray-200 hover:border-blue-200 bg-white/50"
                 }`}
               >
-                <Settings className="w-4 h-4 flex-shrink-0" />
+                <Settings className="w-4 h-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
                 <span className="font-semibold">Account Settings</span>
               </Link>
+
               <button
                 onClick={() => {
                   handleLogout();
                   closeSidebar();
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-all duration-200 border border-transparent hover:border-red-200"
+                className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-sm font-medium text-red-600 hover:bg-red-50 border border-green-200 transition-all duration-300 border-2 border-transparent hover:border-red-200 group"
               >
-                <LogOut className="w-4 h-4 flex-shrink-0" />
+                <LogOut className="w-4 h-4 flex-shrink-0 transition-transform duration-300 group-hover:scale-110" />
                 <span className="font-semibold">Sign Out</span>
               </button>
+
+              {/* Status Indicator */}
+              <div className="flex items-center gap-2 px-4 py-2 bg-green-50 rounded-lg border border-green-200">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs text-green-700 font-medium">Healthcare Active</span>
+              </div>
             </div>
           </div>
         </aside>
 
-        {/* Main content - Scrollable area. On large screens add left margin to avoid overlap with fixed sidebar */}
-        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-slate-50 to-blue-50/30 lg:ml-64 min-h-0 flex flex-col">
-          <div className="flex-1 w-full px-4 sm:px-4 lg:px-4 xl:px-4 py-3 sm:py-4 max-w-8xl mx-auto">
+        {/* Enhanced Main content */}
+        <main className="flex-1 overflow-y-auto bg-gradient-to-br from-blue-50 via-white to-cyan-50 lg:ml-72 min-h-0 pt-16 flex flex-col">
+          <div className="flex-1 w-full px-4 sm:px-6 lg:px-8 py-6 max-w-8xl mx-auto">
             {children}
           </div>
           

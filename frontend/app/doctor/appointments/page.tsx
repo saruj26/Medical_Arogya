@@ -5,7 +5,17 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { FileText, Phone, Clock, Calendar, User, Loader2, Filter, Stethoscope } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  FileText,
+  Phone,
+  Clock,
+  Calendar,
+  User,
+  Loader2,
+  Filter,
+  Stethoscope,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
@@ -31,18 +41,21 @@ export default function DoctorAppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState<string>("confirmed");
+  const [searchName, setSearchName] = useState<string>("");
+  const [searchId, setSearchId] = useState<string>("");
 
   useEffect(() => {
     fetchAllAppointments();
   }, []);
 
   useEffect(() => {
-    if (selectedStatus && allAppointments.length > 0) {
-      filterAppointments();
-    } else {
-      setAppointments(allAppointments);
-    }
+    applyFilters();
   }, [selectedStatus, allAppointments]);
+
+  useEffect(() => {
+    // re-apply filters when search inputs change
+    applyFilters();
+  }, [searchName, searchId]);
 
   const fetchAllAppointments = async () => {
     try {
@@ -50,7 +63,7 @@ export default function DoctorAppointmentsPage() {
       setStatsLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(api('/api/appointment/appointments/'), {
+      const response = await fetch(api("/api/appointment/appointments/"), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -76,10 +89,34 @@ export default function DoctorAppointmentsPage() {
       setAppointments(allAppointments);
     } else {
       const filtered = allAppointments.filter(
-        appointment => appointment.status === selectedStatus
+        (appointment) => appointment.status === selectedStatus
       );
       setAppointments(filtered);
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = allAppointments.slice();
+
+    if (selectedStatus) {
+      filtered = filtered.filter((a) => a.status === selectedStatus);
+    }
+
+    if (searchName && searchName.trim() !== "") {
+      const q = searchName.trim().toLowerCase();
+      filtered = filtered.filter((a) =>
+        (a.patient_name || "").toLowerCase().includes(q)
+      );
+    }
+
+    if (searchId && searchId.trim() !== "") {
+      const q = searchId.trim().toLowerCase();
+      filtered = filtered.filter((a) =>
+        (a.appointment_id || "").toLowerCase().includes(q)
+      );
+    }
+
+    setAppointments(filtered);
   };
 
   const getStatusCounts = () => {
@@ -88,12 +125,12 @@ export default function DoctorAppointmentsPage() {
       confirmed: 0,
       completed: 0,
       cancelled: 0,
-      total: allAppointments.length
+      total: allAppointments.length,
     };
 
-    allAppointments.forEach(appointment => {
+    allAppointments.forEach((appointment) => {
       if (counts.hasOwnProperty(appointment.status)) {
-        counts[appointment.status as keyof Omit<typeof counts, 'total'>]++;
+        counts[appointment.status as keyof Omit<typeof counts, "total">]++;
       }
     });
 
@@ -160,7 +197,9 @@ export default function DoctorAppointmentsPage() {
             <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
             <Stethoscope className="w-6 h-6 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <p className="text-gray-600 mt-4 font-medium">Loading appointments...</p>
+          <p className="text-gray-600 mt-4 font-medium">
+            Loading appointments...
+          </p>
         </div>
       </div>
     );
@@ -181,24 +220,47 @@ export default function DoctorAppointmentsPage() {
                 Manage and track all your patient appointments in one place
               </p>
             </div>
-            
-            <div className="flex items-center gap-3 bg-blue-50 rounded-lg px-4 py-2">
-              <Filter className="w-5 h-5 text-blue-600" />
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="bg-transparent border-none focus:ring-0 text-sm font-medium text-gray-700"
-              >
-                <option value="">All Appointments</option>
-                <option value="pending">Pending</option>
-                <option value="confirmed">Confirmed</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
+
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2">
+                <div className="flex flex-col sm:flex-row items-center gap-2">
+                  <Input
+                    placeholder="Search name"
+                    value={searchName}
+                    onChange={(e) =>
+                      setSearchName((e.target as HTMLInputElement).value)
+                    }
+                    className="h-9 w-40 text-sm text-gray-700"
+                  />
+                  <Input
+                    placeholder="Search ID"
+                    value={searchId}
+                    onChange={(e) =>
+                      setSearchId((e.target as HTMLInputElement).value)
+                    }
+                    className="h-9 w-36 text-sm text-gray-700"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 bg-blue-50 rounded-lg px-4 py-2">
+                <Filter className="w-5 h-5 text-blue-600" />
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => setSelectedStatus(e.target.value)}
+                  className="bg-transparent border-none focus:ring-0 text-sm font-medium text-gray-700"
+                >
+                  <option value="">All Appointments</option>
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
-        
+
         {/* Stats Summary */}
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           {/* Total Appointments Card */}
@@ -206,7 +268,9 @@ export default function DoctorAppointmentsPage() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Total Appointments</p>
+                  <p className="text-sm font-medium text-gray-600">
+                    Total Appointments
+                  </p>
                   <p className="text-2xl font-bold text-gray-900 mt-1">
                     {statsLoading ? (
                       <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
@@ -224,36 +288,50 @@ export default function DoctorAppointmentsPage() {
 
           {/* Status Cards */}
           {["pending", "confirmed", "completed", "cancelled"].map((status) => (
-            <Card 
-              key={status} 
+            <Card
+              key={status}
               className={`bg-white border-l-4 rounded-xl shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
-                selectedStatus === status ? 'ring-2 ring-blue-300' : ''
+                selectedStatus === status ? "ring-2 ring-blue-300" : ""
               } ${
-                status === 'pending' ? 'border-l-yellow-500' :
-                status === 'confirmed' ? 'border-l-blue-500' :
-                status === 'completed' ? 'border-l-green-500' :
-                'border-l-red-500'
+                status === "pending"
+                  ? "border-l-yellow-500"
+                  : status === "confirmed"
+                  ? "border-l-blue-500"
+                  : status === "completed"
+                  ? "border-l-green-500"
+                  : "border-l-red-500"
               }`}
-              onClick={() => setSelectedStatus(selectedStatus === status ? '' : status)}
+              onClick={() =>
+                setSelectedStatus(selectedStatus === status ? "" : status)
+              }
             >
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600 capitalize">{status}</p>
+                    <p className="text-sm font-medium text-gray-600 capitalize">
+                      {status}
+                    </p>
                     <p className="text-2xl font-bold text-gray-900 mt-1">
                       {statsLoading ? (
                         <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
                       ) : (
-                        statusCounts[status as keyof Omit<typeof statusCounts, 'total'>]
+                        statusCounts[
+                          status as keyof Omit<typeof statusCounts, "total">
+                        ]
                       )}
                     </p>
                   </div>
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    status === 'pending' ? 'bg-yellow-100 text-yellow-600' :
-                    status === 'confirmed' ? 'bg-blue-100 text-blue-600' :
-                    status === 'completed' ? 'bg-green-100 text-green-600' :
-                    'bg-red-100 text-red-600'
-                  }`}>
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                      status === "pending"
+                        ? "bg-yellow-100 text-yellow-600"
+                        : status === "confirmed"
+                        ? "bg-blue-100 text-blue-600"
+                        : status === "completed"
+                        ? "bg-green-100 text-green-600"
+                        : "bg-red-100 text-red-600"
+                    }`}
+                  >
                     {getStatusIcon(status)}
                   </div>
                 </div>
@@ -279,8 +357,8 @@ export default function DoctorAppointmentsPage() {
                     : "You don't have any appointments scheduled yet."}
                 </p>
                 {selectedStatus && (
-                  <Button 
-                    onClick={() => setSelectedStatus('')}
+                  <Button
+                    onClick={() => setSelectedStatus("")}
                     className="mt-4 bg-blue-600 hover:bg-blue-700"
                   >
                     View All Appointments
@@ -293,11 +371,19 @@ export default function DoctorAppointmentsPage() {
               {/* Results Count */}
               <div className="bg-white rounded-lg px-4 py-3 shadow-sm border border-blue-100">
                 <p className="text-sm text-gray-600">
-                  Showing <span className="font-semibold text-gray-900">{appointments.length}</span> 
-                  {selectedStatus ? ` ${selectedStatus}` : ''} appointment(s)
+                  Showing{" "}
+                  <span className="font-semibold text-gray-900">
+                    {appointments.length}
+                  </span>
+                  {selectedStatus ? ` ${selectedStatus}` : ""} appointment(s)
                   {selectedStatus && (
                     <span>
-                      {' '}out of <span className="font-semibold text-gray-900">{statusCounts.total}</span> total
+                      {" "}
+                      out of{" "}
+                      <span className="font-semibold text-gray-900">
+                        {statusCounts.total}
+                      </span>{" "}
+                      total
                     </span>
                   )}
                 </p>
@@ -322,7 +408,7 @@ export default function DoctorAppointmentsPage() {
                                 .join("")}
                             </AvatarFallback>
                           </Avatar>
-                          
+
                           <div className="flex-1">
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                               <h3 className="text-lg font-bold text-gray-900">
@@ -330,60 +416,79 @@ export default function DoctorAppointmentsPage() {
                               </h3>
                               <Badge
                                 variant={getStatusVariant(appointment.status)}
-                                className={`capitalize px-3 py-1 rounded-full ${getStatusColor(appointment.status)} border`}
+                                className={`capitalize px-3 py-1 rounded-full ${getStatusColor(
+                                  appointment.status
+                                )} border`}
                               >
                                 {appointment.status}
                               </Badge>
                             </div>
-                            
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <User className="w-4 h-4 text-blue-600" />
-                                  <span>Age: {appointment.patient_age} • {appointment.patient_gender}</span>
+                                  <span>
+                                    Age: {appointment.patient_age} •{" "}
+                                    {appointment.patient_gender}
+                                  </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <Phone className="w-4 h-4 text-blue-600" />
                                   <span>{appointment.patient_phone}</span>
                                 </div>
                                 <div className="text-sm text-gray-600">
-                                  <span className="font-medium">ID:</span> {appointment.appointment_id}
+                                  <span className="font-medium">ID:</span>{" "}
+                                  {appointment.appointment_id}
                                 </div>
                               </div>
-                              
+
                               <div className="space-y-2">
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <Calendar className="w-4 h-4 text-blue-600" />
                                   <span>
-                                    {new Date(appointment.appointment_date).toLocaleDateString('en-US', {
-                                      weekday: 'short',
-                                      year: 'numeric',
-                                      month: 'short',
-                                      day: 'numeric'
+                                    {new Date(
+                                      appointment.appointment_date
+                                    ).toLocaleDateString("en-US", {
+                                      weekday: "short",
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
                                     })}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                   <Clock className="w-4 h-4 text-blue-600" />
-                                  <span className="font-medium">{appointment.appointment_time}</span>
+                                  <span className="font-medium">
+                                    {appointment.appointment_time}
+                                  </span>
                                 </div>
                                 <div className="text-sm text-gray-600">
-                                  <span className="font-medium">Fee:</span> Rs {appointment.consultation_fee}
+                                  <span className="font-medium">Fee:</span> Rs{" "}
+                                  {appointment.consultation_fee}
                                 </div>
                               </div>
                             </div>
-                            
+
                             {/* Medical Information */}
                             <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                  <h4 className="font-semibold text-sm text-gray-700 mb-1">Reason for Visit</h4>
-                                  <p className="text-sm text-gray-600">{appointment.reason}</p>
+                                  <h4 className="font-semibold text-sm text-gray-700 mb-1">
+                                    Reason for Visit
+                                  </h4>
+                                  <p className="text-sm text-gray-600">
+                                    {appointment.reason}
+                                  </p>
                                 </div>
                                 {appointment.symptoms && (
                                   <div>
-                                    <h4 className="font-semibold text-sm text-gray-700 mb-1">Symptoms</h4>
-                                    <p className="text-sm text-gray-600">{appointment.symptoms}</p>
+                                    <h4 className="font-semibold text-sm text-gray-700 mb-1">
+                                      Symptoms
+                                    </h4>
+                                    <p className="text-sm text-gray-600">
+                                      {appointment.symptoms}
+                                    </p>
                                   </div>
                                 )}
                               </div>
@@ -400,11 +505,12 @@ export default function DoctorAppointmentsPage() {
                             {appointment.appointment_time}
                           </div>
                         </div>
-                        
+
                         <Button
                           size="sm"
                           className={`w-full font-medium rounded-lg transition-all duration-200 ${
-                            appointment.status === "completed" || appointment.status === "cancelled"
+                            appointment.status === "completed" ||
+                            appointment.status === "cancelled"
                               ? "bg-gray-100 text-gray-500 hover:bg-gray-100 cursor-not-allowed"
                               : "bg-blue-600 hover:bg-blue-700 text-white shadow-sm hover:shadow-md"
                           }`}

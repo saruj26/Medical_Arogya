@@ -5,6 +5,8 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -130,11 +132,17 @@ export default function CustomerDashboard() {
     }
   };
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("Contact form submitted:", contactForm);
     setContactForm({ name: "", email: "", subject: "", message: "" });
-    alert("Thank you for your message! We'll get back to you soon.");
+    await Swal.fire({
+      icon: "success",
+      title: "Message sent",
+      text: "Thank you for your message! We'll get back to you soon.",
+      timer: 2000,
+      showConfirmButton: false,
+    });
   };
 
   return (
@@ -245,7 +253,7 @@ export default function CustomerDashboard() {
                   <Activity className="w-6 h-6 text-cyan-200" />
                   <h3 className="text-xl font-bold">Platform Performance</h3>
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
@@ -255,16 +263,18 @@ export default function CustomerDashboard() {
                     <div className="text-2xl font-bold">50+</div>
                     <div className="text-xs text-cyan-200 mt-1">Verified</div>
                   </div>
-                  
+
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <User className="w-4 h-4 text-green-300" />
                       <span className="text-sm text-cyan-100">Patients</span>
                     </div>
                     <div className="text-2xl font-bold">10K+</div>
-                    <div className="text-xs text-cyan-200 mt-1">Happy Users</div>
+                    <div className="text-xs text-cyan-200 mt-1">
+                      Happy Users
+                    </div>
                   </div>
-                  
+
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <Calendar className="w-4 h-4 text-green-300" />
@@ -273,11 +283,13 @@ export default function CustomerDashboard() {
                     <div className="text-2xl font-bold">15K+</div>
                     <div className="text-xs text-cyan-200 mt-1">Completed</div>
                   </div>
-                  
+
                   <div className="text-center">
                     <div className="flex items-center justify-center gap-2 mb-2">
                       <TrendingUp className="w-4 h-4 text-green-300" />
-                      <span className="text-sm text-cyan-100">Satisfaction</span>
+                      <span className="text-sm text-cyan-100">
+                        Satisfaction
+                      </span>
                     </div>
                     <div className="text-2xl font-bold">98%</div>
                     <div className="text-xs text-cyan-200 mt-1">Rating</div>
@@ -286,13 +298,15 @@ export default function CustomerDashboard() {
 
                 <div className="mt-6 pt-6 border-t border-cyan-500/30">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-cyan-200">Active Consultations Today</span>
+                    <span className="text-cyan-200">
+                      Active Consultations Today
+                    </span>
                     <span className="font-semibold">47</span>
                   </div>
                   <div className="w-full bg-cyan-700/30 rounded-full h-2 mt-2">
-                    <div 
+                    <div
                       className="bg-green-400 h-2 rounded-full transition-all duration-1000 ease-out"
-                      style={{ width: '78%' }}
+                      style={{ width: "78%" }}
                     ></div>
                   </div>
                 </div>
@@ -304,53 +318,67 @@ export default function CustomerDashboard() {
               <CardContent className="p-8">
                 <div className="flex items-center gap-3 mb-6">
                   <Zap className="w-6 h-6 text-blue-600" />
-                  <h3 className="text-xl font-bold text-gray-900">Quick Actions</h3>
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Quick Actions
+                  </h3>
                 </div>
 
                 <div className="space-y-4">
                   <Link href="/customer/doctors">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full justify-start gap-3 p-4 h-auto border-blue-200 hover:bg-blue-50 hover:border-blue-300 transition-all duration-300 group"
                     >
                       <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
                         <Stethoscope className="w-5 h-5 text-blue-600" />
                       </div>
                       <div className="text-left">
-                        <div className="font-semibold text-gray-900">Find Doctors</div>
-                        <div className="text-sm text-gray-600">Book appointment with specialists</div>
+                        <div className="font-semibold text-gray-900">
+                          Find Doctors
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Book appointment with specialists
+                        </div>
                       </div>
                       <ArrowRight className="w-4 h-4 text-gray-400 ml-auto group-hover:text-blue-600 transition-colors" />
                     </Button>
                   </Link>
 
                   <Link href="/customer/appointment">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full justify-start gap-3 p-4 h-auto border-green-200 hover:bg-green-50 hover:border-green-300 transition-all duration-300 group"
                     >
                       <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
                         <Calendar className="w-5 h-5 text-green-600" />
                       </div>
                       <div className="text-left">
-                        <div className="font-semibold text-gray-900">My Appointments</div>
-                        <div className="text-sm text-gray-600">View and manage bookings</div>
+                        <div className="font-semibold text-gray-900">
+                          My Appointments
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          View and manage bookings
+                        </div>
                       </div>
                       <ArrowRight className="w-4 h-4 text-gray-400 ml-auto group-hover:text-green-600 transition-colors" />
                     </Button>
                   </Link>
 
                   <Link href="/customer/medical-records">
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       className="w-full justify-start gap-3 p-4 h-auto border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 group"
                     >
                       <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
                         <BookOpen className="w-5 h-5 text-purple-600" />
                       </div>
                       <div className="text-left">
-                        <div className="font-semibold text-gray-900">Medical Records</div>
-                        <div className="text-sm text-gray-600">Access your health history</div>
+                        <div className="font-semibold text-gray-900">
+                          Medical Records
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Access your health history
+                        </div>
                       </div>
                       <ArrowRight className="w-4 h-4 text-gray-400 ml-auto group-hover:text-purple-600 transition-colors" />
                     </Button>
@@ -361,7 +389,8 @@ export default function CustomerDashboard() {
                   <div className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                     <div className="text-sm text-gray-700">
-                      <span className="font-semibold">Premium Feature:</span> Get instant e-prescriptions after consultation
+                      <span className="font-semibold">Premium Feature:</span>{" "}
+                      Get instant e-prescriptions after consultation
                     </div>
                   </div>
                 </div>

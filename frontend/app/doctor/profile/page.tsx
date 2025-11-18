@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 import {
   Card,
   CardContent,
@@ -20,14 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { 
-  Save, 
-  Clock, 
-  AlertCircle, 
-  Check, 
-  User, 
-  Briefcase, 
-  GraduationCap, 
+import {
+  Save,
+  Clock,
+  AlertCircle,
+  Check,
+  User,
+  Briefcase,
+  GraduationCap,
   FileText,
   Calendar,
   Clock as ClockIcon,
@@ -37,7 +39,7 @@ import {
   Award,
   MapPin,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
 } from "lucide-react";
 
 const daysOfWeek = [
@@ -65,6 +67,10 @@ import { useRouter } from "next/navigation";
 
 export default function DoctorProfilePage() {
   const [doctorProfile, setDoctorProfile] = useState<any>(null);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
+    null
+  );
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -124,6 +130,7 @@ export default function DoctorProfilePage() {
             available_time_slots: data.profile.available_time_slots || [],
             consultation_fee: data.profile.consultation_fee || 500,
           });
+          setProfileImagePreview(data.profile.profile_image || null);
         }
       }
     } catch (error) {
@@ -134,42 +141,129 @@ export default function DoctorProfilePage() {
   };
 
   const handleProfileUpdate = async () => {
+    // Ask user to confirm before saving
+    const confirm = await Swal.fire({
+      title: "Save changes?",
+      text: "Are you sure you want to save these profile changes?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, save",
+      cancelButtonText: "Cancel",
+    });
+
+    if (!confirm.isConfirmed) return;
+
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(api(`/api/doctor/doctor/profile/`), {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(profileForm),
+      // Build FormData for multipart upload (including optional image)
+      const formData = new FormData();
+
+      // Handle all fields including arrays properly
+      Object.entries(profileForm).forEach(([key, value]) => {
+        if (value !== null && typeof value !== "undefined") {
+          // For arrays, send as JSON strings
+          if (Array.isArray(value)) {
+            formData.append(key, JSON.stringify(value));
+          } else {
+            formData.append(key, String(value));
+          }
+        }
       });
 
+      if (profileImageFile) {
+        formData.append("profile_image", profileImageFile);
+      }
+
+      const headers: Record<string, string> = {};
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
+      const response = await fetch(api(`/api/doctor/doctor/profile/`), {
+        method: "PUT",
+        headers,
+        body: formData,
+      });
+
+      let respData = null;
+      try {
+        respData = await response.json();
+      } catch (e) {
+        const text = await response.text();
+        respData = { detail: text };
+      }
+
       if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          alert("Profile updated successfully!");
-          setDoctorProfile(data.profile);
-          if (data.profile.is_profile_complete) {
+        if (respData && respData.success) {
+          await Swal.fire({
+            icon: "success",
+            title: "Profile saved",
+            text: "Profile updated successfully!",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          setDoctorProfile(respData.profile);
+          setProfileImagePreview(respData.profile.profile_image || null);
+          if (respData.profile.is_profile_complete) {
             setTimeout(() => {
               router.push("/doctor");
             }, 1500);
           }
         } else {
-          alert(
-            "Failed to update profile: " + (data.message || "Unknown error")
-          );
+          console.error("Profile update returned error payload:", respData);
+          await Swal.fire({
+            icon: "error",
+            title: "Update failed",
+            text:
+              respData?.message || JSON.stringify(respData) || "Unknown error",
+          });
         }
       } else {
-        alert("Failed to update profile. Please try again.");
+        console.error("Profile update failed, server response:", respData);
+        // Show detailed validation errors when available
+        if (respData && respData.errors) {
+          const errorMessages = Object.entries(respData.errors)
+            .map(
+              ([field, errors]) =>
+                `<strong>${field}:</strong> ${
+                  Array.isArray(errors) ? errors.join(", ") : errors
+                }`
+            )
+            .join("<br />");
+          await Swal.fire({
+            icon: "error",
+            title: "Validation errors",
+            html: errorMessages,
+          });
+        } else {
+          await Swal.fire({
+            icon: "error",
+            title: "Update failed",
+            text: respData?.message || "Please check all required fields",
+          });
+        }
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      alert("Failed to update profile. Please try again.");
+      await Swal.fire({
+        icon: "error",
+        title: "Update failed",
+        text: "Failed to update profile. Please try again.",
+      });
     } finally {
       setSaving(false);
+    }
+  };
+  const handleImageChange = (e: any) => {
+    const file = e.target.files && e.target.files[0];
+    if (file) {
+      setProfileImageFile(file);
+      try {
+        const url = URL.createObjectURL(file);
+        setProfileImagePreview(url);
+      } catch (err) {
+        setProfileImagePreview(null);
+      }
     }
   };
 
@@ -227,7 +321,9 @@ export default function DoctorProfilePage() {
             <div className="w-16 h-16 border-4 border-blue-200 rounded-full animate-spin border-t-blue-600"></div>
             <User className="w-6 h-6 text-blue-600 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <p className="text-gray-600 mt-4 font-medium">Loading your profile...</p>
+          <p className="text-gray-600 mt-4 font-medium">
+            Loading your profile...
+          </p>
         </div>
       </div>
     );
@@ -251,7 +347,7 @@ export default function DoctorProfilePage() {
                 : "Complete your profile setup to start accepting patient appointments"}
             </p>
           </div>
-          
+
           {doctorProfile?.is_profile_complete && (
             <Badge className="bg-green-100 text-green-800 border-green-200 px-4 py-2 text-sm font-medium">
               <Check className="w-4 h-4 mr-1" />
@@ -267,9 +363,12 @@ export default function DoctorProfilePage() {
               <div className="flex items-center gap-3">
                 <AlertCircle className="w-5 h-5 text-orange-600" />
                 <div>
-                  <p className="font-medium text-orange-800">Profile Incomplete</p>
+                  <p className="font-medium text-orange-800">
+                    Profile Incomplete
+                  </p>
                   <p className="text-sm text-orange-700">
-                    Complete your profile to start accepting appointments and appear in patient searches.
+                    Complete your profile to start accepting appointments and
+                    appear in patient searches.
                   </p>
                 </div>
               </div>
@@ -289,11 +388,43 @@ export default function DoctorProfilePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6 space-y-8">
+            {/* Profile Image Upload */}
+            <div className="flex items-center gap-6">
+              <div className="w-28 h-28 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center border">
+                {profileImagePreview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={profileImagePreview}
+                    alt="profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="text-gray-500">No photo</div>
+                )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Profile Photo
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="text-sm"
+                />
+                <p className="text-xs text-gray-500 mt-2">
+                  Recommended: JPG/PNG, max 5MB.
+                </p>
+              </div>
+            </div>
             {/* Basic Information Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {/* Specialty */}
               <div className="space-y-2">
-                <Label htmlFor="specialty" className="text-sm font-semibold flex items-center gap-2">
+                <Label
+                  htmlFor="specialty"
+                  className="text-sm font-semibold flex items-center gap-2"
+                >
                   <Award className="w-4 h-4 text-blue-600" />
                   Specialty *
                 </Label>
@@ -319,7 +450,10 @@ export default function DoctorProfilePage() {
 
               {/* Experience */}
               <div className="space-y-2">
-                <Label htmlFor="experience" className="text-sm font-semibold flex items-center gap-2">
+                <Label
+                  htmlFor="experience"
+                  className="text-sm font-semibold flex items-center gap-2"
+                >
                   <Star className="w-4 h-4 text-blue-600" />
                   Experience *
                 </Label>
@@ -339,7 +473,10 @@ export default function DoctorProfilePage() {
 
               {/* Qualification */}
               <div className="space-y-2">
-                <Label htmlFor="qualification" className="text-sm font-semibold flex items-center gap-2">
+                <Label
+                  htmlFor="qualification"
+                  className="text-sm font-semibold flex items-center gap-2"
+                >
                   <GraduationCap className="w-4 h-4 text-blue-600" />
                   Qualification *
                 </Label>
@@ -359,7 +496,10 @@ export default function DoctorProfilePage() {
 
               {/* License Number */}
               <div className="space-y-2">
-                <Label htmlFor="license" className="text-sm font-semibold flex items-center gap-2">
+                <Label
+                  htmlFor="license"
+                  className="text-sm font-semibold flex items-center gap-2"
+                >
                   <Shield className="w-4 h-4 text-blue-600" />
                   License Number
                 </Label>
@@ -379,7 +519,10 @@ export default function DoctorProfilePage() {
 
               {/* Consultation Fee */}
               <div className="space-y-2">
-                <Label htmlFor="consultation_fee" className="text-sm font-semibold flex items-center gap-2">
+                <Label
+                  htmlFor="consultation_fee"
+                  className="text-sm font-semibold flex items-center gap-2"
+                >
                   <DollarSign className="w-4 h-4 text-blue-600" />
                   Consultation Fee (Rs)
                 </Label>
@@ -401,7 +544,10 @@ export default function DoctorProfilePage() {
 
             {/* Professional Bio */}
             <div className="space-y-3">
-              <Label htmlFor="bio" className="text-sm font-semibold flex items-center gap-2">
+              <Label
+                htmlFor="bio"
+                className="text-sm font-semibold flex items-center gap-2"
+              >
                 <FileText className="w-4 h-4 text-blue-600" />
                 Professional Bio *
               </Label>
@@ -416,14 +562,15 @@ export default function DoctorProfilePage() {
                 }
               />
               <p className="text-xs text-gray-500">
-                This bio will be visible to patients when they view your profile.
+                This bio will be visible to patients when they view your
+                profile.
               </p>
             </div>
 
             {/* Availability Section - Compact Design */}
             <div className="border border-blue-100 rounded-xl bg-blue-25 overflow-hidden">
               {/* Availability Header */}
-              <div 
+              <div
                 className="p-4 bg-blue-50 border-b border-blue-100 cursor-pointer hover:bg-blue-100 transition-colors"
                 onClick={() => setShowAvailability(!showAvailability)}
               >
@@ -431,14 +578,21 @@ export default function DoctorProfilePage() {
                   <div className="flex items-center gap-3">
                     <Calendar className="w-5 h-5 text-blue-600" />
                     <div>
-                      <h3 className="font-semibold text-gray-900">Availability Schedule</h3>
+                      <h3 className="font-semibold text-gray-900">
+                        Availability Schedule
+                      </h3>
                       <p className="text-sm text-gray-600">
-                        {profileForm.available_days.length} days • {profileForm.available_time_slots.length} time slots selected
+                        {profileForm.available_days.length} days •{" "}
+                        {profileForm.available_time_slots.length} time slots
+                        selected
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-blue-100 text-blue-700">
+                    <Badge
+                      variant="secondary"
+                      className="bg-blue-100 text-blue-700"
+                    >
                       {profileForm.available_days.length}/7 days
                     </Badge>
                     {showAvailability ? (
@@ -481,7 +635,7 @@ export default function DoctorProfilePage() {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-7 gap-2">
                       {daysOfWeek.map((day) => (
                         <button
@@ -490,9 +644,10 @@ export default function DoctorProfilePage() {
                           onClick={() => toggleDay(day)}
                           className={`
                             p-3 rounded-lg border text-sm font-medium transition-all duration-200 flex flex-col items-center justify-center
-                            ${profileForm.available_days.includes(day)
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                              : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                            ${
+                              profileForm.available_days.includes(day)
+                                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                : "bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50"
                             }
                           `}
                         >
@@ -535,7 +690,7 @@ export default function DoctorProfilePage() {
                         </Button>
                       </div>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                       {timeSlots.map((slot) => (
                         <button
@@ -544,16 +699,17 @@ export default function DoctorProfilePage() {
                           onClick={() => toggleTimeSlot(slot)}
                           className={`
                             p-3 rounded-lg border text-sm font-medium transition-all duration-200 text-center
-                            ${profileForm.available_time_slots.includes(slot)
-                              ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
-                              : 'bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50'
+                            ${
+                              profileForm.available_time_slots.includes(slot)
+                                ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                                : "bg-white text-gray-700 border-gray-200 hover:border-blue-300 hover:bg-blue-50"
                             }
                           `}
                         >
                           <div className="flex items-center justify-center gap-1">
-                            {profileForm.available_time_slots.includes(slot) && (
-                              <Check className="w-3 h-3 mr-1" />
-                            )}
+                            {profileForm.available_time_slots.includes(
+                              slot
+                            ) && <Check className="w-3 h-3 mr-1" />}
                             {slot}
                           </div>
                         </button>
@@ -563,19 +719,26 @@ export default function DoctorProfilePage() {
 
                   {/* Selected Summary */}
                   <div className="p-4 bg-blue-50 rounded-lg border border-blue-100">
-                    <h4 className="font-semibold text-sm text-gray-900 mb-2">Selected Availability</h4>
+                    <h4 className="font-semibold text-sm text-gray-900 mb-2">
+                      Selected Availability
+                    </h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                       <div>
-                        <span className="font-medium text-gray-700">Days: </span>
+                        <span className="font-medium text-gray-700">
+                          Days:{" "}
+                        </span>
                         <span className="text-gray-600">
-                          {profileForm.available_days.length > 0 
-                            ? profileForm.available_days.map(day => day.substring(0, 3)).join(', ')
-                            : 'No days selected'
-                          }
+                          {profileForm.available_days.length > 0
+                            ? profileForm.available_days
+                                .map((day) => day.substring(0, 3))
+                                .join(", ")
+                            : "No days selected"}
                         </span>
                       </div>
                       <div>
-                        <span className="font-medium text-gray-700">Time Slots: </span>
+                        <span className="font-medium text-gray-700">
+                          Time Slots:{" "}
+                        </span>
                         <span className="text-gray-600">
                           {profileForm.available_time_slots.length} selected
                         </span>
@@ -608,7 +771,7 @@ export default function DoctorProfilePage() {
                   </>
                 )}
               </Button>
-              
+
               {doctorProfile?.is_profile_complete && (
                 <Button
                   variant="outline"
@@ -630,9 +793,13 @@ export default function DoctorProfilePage() {
                 <Check className="w-5 h-5 text-green-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Profile Status</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Profile Status
+                </p>
                 <p className="text-lg font-semibold text-gray-900">
-                  {doctorProfile?.is_profile_complete ? "Complete" : "Incomplete"}
+                  {doctorProfile?.is_profile_complete
+                    ? "Complete"
+                    : "Incomplete"}
                 </p>
               </div>
             </CardContent>
@@ -644,7 +811,9 @@ export default function DoctorProfilePage() {
                 <Calendar className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Available Days</p>
+                <p className="text-sm font-medium text-gray-600">
+                  Available Days
+                </p>
                 <p className="text-lg font-semibold text-gray-900">
                   {profileForm.available_days.length}/7 days
                 </p>

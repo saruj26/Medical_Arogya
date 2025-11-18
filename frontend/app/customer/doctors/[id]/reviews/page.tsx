@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
@@ -165,11 +167,19 @@ export default function DoctorReviewsPage() {
       } else {
         const text = await res.text();
         console.error("Failed to submit review", res.status, text);
-        alert("Failed to submit review");
+        await Swal.fire({
+          icon: "error",
+          title: "Submission failed",
+          text: "Failed to submit review",
+        });
       }
     } catch (err) {
       console.error(err);
-      alert("Error submitting review");
+      await Swal.fire({
+        icon: "error",
+        title: "Submission failed",
+        text: "Error submitting review",
+      });
     } finally {
       setSubmitting(false);
     }

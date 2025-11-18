@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,17 +41,27 @@ export default function AddDoctorPage() {
       const data = await response.json();
 
       if (data.success) {
-        alert(
-          `Doctor added successfully! Welcome email sent to ${doctorForm.email}`
-        );
+        await Swal.fire({
+          icon: "success",
+          title: "Doctor added",
+          text: `Doctor added successfully! Welcome email sent to ${doctorForm.email}`,
+        });
         router.push("/admin/doctors");
       } else {
         const message = data.message || JSON.stringify(data.errors || data);
-        alert(`Failed to add doctor: ${message}`);
+        await Swal.fire({
+          icon: "error",
+          title: "Add failed",
+          text: `Failed to add doctor: ${message}`,
+        });
       }
     } catch (error) {
       console.error("Error adding doctor:", error);
-      alert("Failed to add doctor. Please try again.");
+      await Swal.fire({
+        icon: "error",
+        title: "Add failed",
+        text: "Failed to add doctor. Please try again.",
+      });
     }
   };
 

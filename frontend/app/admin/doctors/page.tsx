@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,26 +60,47 @@ export default function DoctorsPage() {
   };
 
   const handleDeleteDoctor = async (doctorId: number) => {
-    if (confirm("Are you sure you want to delete this doctor?")) {
-      try {
-        const token = localStorage.getItem("token");
-        const response = await fetch(api(`/api/doctor/doctors/${doctorId}/`), {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+    const res = await Swal.fire({
+      title: "Delete doctor?",
+      text: "This action cannot be undone.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Delete",
+      cancelButtonText: "Cancel",
+    });
 
-        if (response.ok) {
-          alert("Doctor deleted successfully");
-          fetchDoctors(); // Refresh list
-        } else {
-          alert("Failed to delete doctor");
-        }
-      } catch (error) {
-        console.error("Error deleting doctor:", error);
-        alert("Failed to delete doctor");
+    if (!res.isConfirmed) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(api(`/api/doctor/doctors/${doctorId}/`), {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        await Swal.fire({
+          icon: "success",
+          title: "Deleted",
+          text: "Doctor deleted successfully",
+        });
+        fetchDoctors(); // Refresh list
+      } else {
+        await Swal.fire({
+          icon: "error",
+          title: "Delete failed",
+          text: "Failed to delete doctor",
+        });
       }
+    } catch (error) {
+      console.error("Error deleting doctor:", error);
+      await Swal.fire({
+        icon: "error",
+        title: "Delete failed",
+        text: "Failed to delete doctor",
+      });
     }
   };
 
