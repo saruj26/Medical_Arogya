@@ -7,6 +7,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from django.core.mail import send_mail
 from django.conf import settings
 import logging
+import json
 
 from core.models import User
 from .models import DoctorProfile
@@ -112,11 +113,7 @@ class DoctorProfileView(APIView):
                 'profile': serializer.data
             })
         except DoctorProfile.DoesNotExist:
-            # If a doctor user exists but doesn't yet have a DoctorProfile,
-            # create a placeholder profile so the frontend can show the
-            # profile editing UI and persist details on first save.
             try:
-                # Generate a unique doctor_id similar to DoctorCreateSerializer
                 last = DoctorProfile.objects.exclude(doctor_id__isnull=True).order_by('-id').first()
                 if last and last.doctor_id and last.doctor_id.startswith('DOC'):
                     try:
@@ -156,23 +153,26 @@ class DoctorProfileView(APIView):
         
         try:
             doctor_profile = DoctorProfile.objects.get(user=request.user)
-            serializer = DoctorProfileSerializer(doctor_profile, data=request.data, partial=True)
+            
+            # Use the serializer's built-in validation instead of manual processing
+            serializer = DoctorProfileSerializer(
+                doctor_profile, 
+                data=request.data, 
+                partial=True,
+                context={'request': request}
+            )
             
             if serializer.is_valid():
-                serializer.save()
+                updated_profile = serializer.save()
                 
-                # ✅ CORRECT: Check if all required fields have non-empty values
-                updated_profile = DoctorProfile.objects.get(user=request.user)
+                # Update profile completion status
                 required_fields = ['specialty', 'experience', 'qualification', 'bio']
-                
-                # Check if all required fields have values
                 has_all_fields = all(
                     getattr(updated_profile, field) and 
                     len(str(getattr(updated_profile, field)).strip()) > 0 
                     for field in required_fields
                 )
                 
-                # Check if availability is set
                 has_availability = (
                     updated_profile.available_days and 
                     len(updated_profile.available_days) > 0 and
@@ -180,7 +180,6 @@ class DoctorProfileView(APIView):
                     len(updated_profile.available_time_slots) > 0
                 )
                 
-                # Update completion status
                 is_complete = has_all_fields and has_availability
                 if is_complete != updated_profile.is_profile_complete:
                     updated_profile.is_profile_complete = is_complete
@@ -191,6 +190,9 @@ class DoctorProfileView(APIView):
                     'message': 'Profile updated successfully',
                     'profile': DoctorProfileSerializer(updated_profile, context={'request': request}).data
                 })
+            
+            # Log validation errors for debugging
+            logger.error(f"Profile update validation errors: {serializer.errors}")
             
             return Response({
                 'success': False,
@@ -204,6 +206,7 @@ class DoctorProfileView(APIView):
                 'message': 'Doctor profile not found'
             }, status=status.HTTP_404_NOT_FOUND)
 
+# ... rest of your views remain the same ...
 
 class DoctorTipsListCreateView(APIView):
     """GET: list published tips (public).

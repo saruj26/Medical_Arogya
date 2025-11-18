@@ -1,4 +1,3 @@
-
 from rest_framework import serializers
 from django.db.models import Avg, Count
 from core.models import User
@@ -24,6 +23,49 @@ class DoctorProfileSerializer(serializers.ModelSerializer):
             'avg_rating', 'review_count',
         )
         read_only_fields = ('user', 'created_at', 'updated_at', 'doctor_id')
+
+    def validate_specialty(self, value):
+        """Map frontend specialty values to display-friendly format"""
+        if not value:
+            return value
+            
+        specialty_mapping = {
+            'cardiology': 'Cardiology',
+            'dermatology': 'Dermatology', 
+            'pediatrics': 'Pediatrics',
+            'orthopedics': 'Orthopedics',
+            'neurology': 'Neurology',
+            'general': 'General Medicine'
+        }
+        
+        return specialty_mapping.get(value.lower(), value.title())
+
+    def validate_available_days(self, value):
+        """Ensure available_days is a proper list"""
+        if isinstance(value, str):
+            try:
+                import json
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                value = [item.strip() for item in value.split(',') if item.strip()]
+        return value or []
+
+    def validate_available_time_slots(self, value):
+        """Ensure available_time_slots is a proper list"""
+        if isinstance(value, str):
+            try:
+                import json
+                value = json.loads(value)
+            except json.JSONDecodeError:
+                value = [item.strip() for item in value.split(',') if item.strip()]
+        return value or []
+
+    def validate_consultation_fee(self, value):
+        """Ensure consultation_fee is properly converted to decimal"""
+        try:
+            return float(value)
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Consultation fee must be a valid number")
 
     def get_avg_rating(self, obj):
         # aggregate average rating from related reviews
