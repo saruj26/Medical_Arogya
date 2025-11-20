@@ -350,3 +350,81 @@ class DoctorReviewsView(APIView):
             return Response({'success': True, 'review': DoctorReviewSerializer(review).data}, status=status.HTTP_201_CREATED)
 
         return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PharmacistListView(APIView):
+    """List pharmacists for admin management."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Only admin users should list pharmacists here
+        if getattr(request.user, 'role', None) != 'admin' and not getattr(request.user, 'is_staff', False):
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        pharmacists = User.objects.filter(role='pharmacist')
+        # Return minimal fields
+        data = [
+            {
+                'id': u.id,
+                'name': u.name,
+                'email': u.email,
+                'phone': u.phone,
+                'date_joined': u.date_joined,
+            }
+            for u in pharmacists
+        ]
+
+        return Response({'success': True, 'pharmacists': data})
+
+
+class PharmacistCreateView(APIView):
+    """Allow admin to create a pharmacist user and send welcome email."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if getattr(request.user, 'role', None) != 'admin' and not getattr(request.user, 'is_staff', False):
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        data = request.data or {}
+        email = data.get('email')
+        name = data.get('name')
+        phone = data.get('phone', '')
+        password = data.get('password')
+
+        if not email or not name or not password:
+            return Response({'success': False, 'message': 'Missing required fields (email, name, password)'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Check if user exists
+        if User.objects.filter(email=email).exists():
+            return Response({'success': False, 'message': 'User with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.create_user(email=email, password=password, name=name, phone=phone, role='pharmacist')
+        except Exception as e:
+            return Response({'success': False, 'message': f'Failed to create user: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Send welcome email with credentials
+        email_sent = False
+        frontend_url = getattr(settings, 'FRONTEND_URL', 'http://localhost:3000')
+        subject = 'Welcome to Arogya - Pharmacist Account Created'
+        message = f"""
+Welcome to Arogya!
+
+Your pharmacist account has been created with the following details:
+Email: {user.email}
+Temporary Password: {password}
+
+Please log in and change your password immediately for security.
+Login at: {frontend_url}
+
+Best regards,
+Arogya Admin Team
+"""
+
+        try:
+            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
+            email_sent = True
+        except Exception:
+            logger.exception("Failed to send pharmacist creation email to %s", user.email)
+
+        return Response({'success': True, 'message': 'pharmacist added successfully', 'pharmacist': {'id': user.id, 'email': user.email, 'name': user.name}, 'email_sent': email_sent}, status=status.HTTP_201_CREATED)

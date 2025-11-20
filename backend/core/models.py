@@ -32,6 +32,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         ('customer', 'Customer'),
         ('doctor', 'Doctor'),
         ('admin', 'Admin'),
+        ('pharmacist', 'Pharmacist'),
     )
 
     email = models.EmailField(unique=True)

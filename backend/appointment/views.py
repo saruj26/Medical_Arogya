@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Q
+from django.db.models import Count, Sum
 from .models import Appointment, Prescription
 from doctor.models import DoctorProfile
 from django.core.exceptions import ObjectDoesNotExist
@@ -401,3 +402,96 @@ class AppointmentCancelView(APIView):
             appointment.save(update_fields=['status', 'company_fee', 'refund_amount', 'refunded', 'payment_status'])
 
         return Response({'success': True, 'message': 'Appointment cancelled', 'company_fee': str(company_fee), 'refund_amount': str(refund_amount)})
+
+
+class AdminAppointmentStatsView(APIView):
+    """Return day-wise appointment counts and revenue for the admin dashboard."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Only allow staff or admin role users
+        user = request.user
+        if not getattr(user, 'is_staff', False) and getattr(user, 'role', None) != 'admin':
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            days = int(request.query_params.get('days', 7))
+        except Exception:
+            days = 7
+
+        days = max(1, min(days, 30))
+        today = timezone.localdate()
+        start = today - datetime.timedelta(days=days - 1)
+
+        qs = Appointment.objects.filter(appointment_date__range=(start, today))
+
+        # Aggregate counts and revenue per day
+        agg = qs.values('appointment_date').annotate(
+            count=Count('id'),
+            revenue=Sum('consultation_fee')
+        ).order_by('appointment_date')
+
+        # Build a date-indexed map for fast lookup
+        data_map = {item['appointment_date']: item for item in agg}
+
+        labels = []
+        counts = []
+        revenues = []
+
+        for i in range(days):
+            d = start + datetime.timedelta(days=i)
+            labels.append(d.isoformat())
+            entry = data_map.get(d)
+            if entry:
+                counts.append(int(entry.get('count') or 0))
+                rev = entry.get('revenue') or 0
+                # Convert Decimal to float for JSON serialization
+                try:
+                    revenues.append(float(rev))
+                except Exception:
+                    revenues.append(0.0)
+            else:
+                counts.append(0)
+                revenues.append(0.0)
+
+        total_count = sum(counts)
+        total_revenue = sum(revenues)
+
+        return Response({
+            'success': True,
+            'labels': labels,
+            'counts': counts,
+            'revenues': revenues,
+            'total_count': total_count,
+            'total_revenue': str(total_revenue),
+        })
+
+
+class AdminOverviewView(APIView):
+    """Return basic totals for admin dashboard cards."""
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        if not getattr(user, 'is_staff', False) and getattr(user, 'role', None) != 'admin':
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        total_doctors = DoctorProfile.objects.count()
+        total_appointments = Appointment.objects.count()
+        pending_payments = Appointment.objects.filter(status='pending').count()
+
+        agg = Appointment.objects.aggregate(total_revenue=Sum('consultation_fee'))
+        total_revenue = agg.get('total_revenue') or 0
+
+        try:
+            total_revenue_val = float(total_revenue)
+        except Exception:
+            total_revenue_val = 0.0
+
+        return Response({
+            'success': True,
+            'total_doctors': total_doctors,
+            'total_appointments': total_appointments,
+            'pending_payments': pending_payments,
+            'total_revenue': str(total_revenue_val),
+        })

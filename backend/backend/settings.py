@@ -106,6 +106,7 @@ INSTALLED_APPS = [
     # Local apps
     'core',
     'doctor',
+    'pharmacy',
     'chat',
     'appointment',
     ]
