@@ -61,9 +61,13 @@ export function LoginForm({
       }
 
       if (response.ok && data.success && data.user && data.token) {
+        // Normalize role to handle legacy/misspelled values (e.g. "phamacist")
+        const rawRole = (data.user && data.user.role) || "";
+        const normalizedRole = rawRole === "phamacist" ? "pharmacist" : rawRole;
+
         localStorage.setItem("user", JSON.stringify(data.user));
         localStorage.setItem("token", data.token);
-        localStorage.setItem("userRole", data.user.role);
+        localStorage.setItem("userRole", normalizedRole);
         localStorage.setItem("userEmail", data.user.email);
         localStorage.setItem("userId", data.user.id.toString());
 
@@ -71,15 +75,19 @@ export function LoginForm({
 
         setTimeout(() => {
           onSuccess();
-          if (data.user.role === "admin") {
+          const roleToUse = rawRole === "phamacist" ? "pharmacist" : rawRole;
+
+          if (roleToUse === "admin") {
             router.push("/admin");
-          } else if (data.user.role === "doctor") {
+          } else if (roleToUse === "doctor") {
             const complete = (data.user as any).is_profile_complete;
             if (!complete) {
               router.push("/doctor/profile");
             } else {
               router.push("/doctor");
             }
+          } else if (roleToUse === "pharmacist") {
+            router.push("/pharmacist");
           } else {
             router.push("/customer");
           }
