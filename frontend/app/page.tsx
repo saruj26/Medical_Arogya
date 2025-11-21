@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { AuthModal } from "@/components/auth/auth-modal";
 import {
   Card,
   CardDescription,
@@ -33,7 +34,31 @@ import {
   MessageCircle,
 } from "lucide-react";
 
+function useAuthModal() {
+  const [authModal, setAuthModal] = useState<{
+    isOpen: boolean;
+    mode: "login" | "register";
+  }>({
+    isOpen: false,
+    mode: "login",
+  });
+
+
+  const openAuthModal = (mode: "login" | "register") => {
+    setAuthModal({ isOpen: true, mode });
+  };
+
+  const closeAuthModal = () => {
+    setAuthModal({ isOpen: false, mode: "login" });
+  };
+
+  return { authModal, openAuthModal, closeAuthModal };
+}
+
+
 export default function HomePage() {
+  const { authModal, openAuthModal, closeAuthModal } = useAuthModal();
+
   const specialties = [
     "Cardiology",
     "Dermatology",
@@ -88,16 +113,16 @@ export default function HomePage() {
 
             {/* Premium CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 mb-16">
-              <Link href="/auth?mode=register">
+             
                 <Button
+                  onClick={() => openAuthModal("login")}
                   size="lg"
                   className="bg-white text-[#1656a4] hover:bg-white/95 px-10 py-6 text-lg font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 border-0 rounded-2xl"
                 >
                   <Calendar className="w-5 h-5 mr-3" />
                   Book Premium Consultation
                   <ArrowRight className="w-5 h-5 ml-3" />
-                </Button>
-              </Link>
+                </Button>          
               <Link href="/guest/doctors">
                 <Button
                   size="lg"
@@ -445,7 +470,10 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
+      <AuthModal
+        isOpen={authModal.isOpen}
+        onClose={closeAuthModal}
+      />
       <Footer />
     </div>
   );

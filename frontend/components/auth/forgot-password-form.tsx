@@ -25,10 +25,15 @@ export function ForgotPasswordForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const API_BASE_URL = api("");
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Basic email validation
+    if (!email || !email.includes('@')) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
     setSuccess("");
@@ -45,20 +50,19 @@ export function ForgotPasswordForm({
       const data = await response.json();
 
       if (data.success) {
-        setSuccess("OTP sent to your email!");
+        setSuccess("OTP sent to your email! Redirecting...");
         setTimeout(() => {
           onModeChange("otp", email);
-        }, 1000);
+        }, 1500);
       } else {
-        setError(data.message || "Failed to send OTP. Please try again.");
+        setError(data.message || data.errors?.email?.[0] || "Failed to send OTP. Please try again.");
       }
     } catch (err) {
-      const message =
-        err instanceof Error && /Failed to fetch|network/i.test(err.message)
-          ? `Cannot connect to backend at ${API_BASE_URL}. Is the Django server running?`
-          : "An error occurred. Please try again.";
-      setError(message);
       console.error("Forgot password error:", err);
+      const message = err instanceof Error 
+        ? err.message 
+        : "Network error. Please check your connection and try again.";
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -66,6 +70,13 @@ export function ForgotPasswordForm({
 
   return (
     <div className="space-y-4">
+      <div className="text-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Reset Password</h3>
+        <p className="text-sm text-gray-600">
+          Enter your email to receive a reset OTP
+        </p>
+      </div>
+
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-red-600" />
@@ -83,33 +94,45 @@ export function ForgotPasswordForm({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <Label htmlFor="email" className="text-sm font-medium">
-            Email
+            Email Address
           </Label>
           <Input
             id="email"
             type="email"
-            placeholder="Enter your email"
+            placeholder="Enter your registered email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="h-10 mt-1"
             required
+            disabled={isLoading}
           />
         </div>
 
         <Button
           type="submit"
           className="w-full h-10 bg-[#1656a4] hover:bg-[#1656a4]/90"
-          disabled={isLoading}
+          disabled={isLoading || !email}
         >
           {isLoading ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Loading...
+              Sending OTP...
             </div>
           ) : (
             "Send OTP"
           )}
         </Button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => onModeChange("login")}
+            className="text-sm text-[#1656a4] hover:underline"
+            disabled={isLoading}
+          >
+            Back to Login
+          </button>
+        </div>
       </form>
     </div>
   );
