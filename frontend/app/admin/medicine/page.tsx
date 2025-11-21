@@ -17,6 +17,7 @@ import {
   RotateCcw,
   Upload,
   Pill,
+  Search,
   FolderPlus,
   BarChart3,
   AlertTriangle,
@@ -30,6 +31,9 @@ export default function MedicineAdminPage() {
   const [catName, setCatName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const [search, setSearch] = useState("");
+  const [filterCategoryId, setFilterCategoryId] = useState<number | null>(null);
+
   const [form, setForm] = useState<any>({
     id: null,
     name: "",
@@ -38,6 +42,8 @@ export default function MedicineAdminPage() {
     measureType: "weight",
     measureValue: "",
     measureUnit: "mg",
+    price: "",
+    discount: "",
     stock_count: 0,
     description: "",
     image: null,
@@ -78,6 +84,15 @@ export default function MedicineAdminPage() {
     }
   };
 
+  const filteredMedicines = medicines.filter((m) => {
+    const matchSearch = !search
+      ? true
+      : (m.name || "").toString().toLowerCase().includes(search.toLowerCase());
+    const matchCategory = !filterCategoryId
+      ? true
+      : m.category?.id === filterCategoryId;
+    return matchSearch && matchCategory;
+  });
   const handleAddCategory = async () => {
     if (!catName.trim()) {
       await Swal.fire({
@@ -151,12 +166,22 @@ export default function MedicineAdminPage() {
       if (form.name) fd.append("name", form.name);
       if (form.category_id) fd.append("category_id", String(form.category_id));
       if (form.brand) fd.append("brand", form.brand);
-      
+
       if (form.measureValue) {
-        const unit = form.measureUnit || (form.measureType === "volume" ? "ml" : "mg");
+        const unit =
+          form.measureUnit || (form.measureType === "volume" ? "ml" : "mg");
         fd.append("weight_or_volume", `${form.measureValue}${unit}`);
       }
-      
+      // price and discount
+      if (form.price !== undefined && form.price !== null && form.price !== "")
+        fd.append("price", String(form.price));
+      if (
+        form.discount !== undefined &&
+        form.discount !== null &&
+        form.discount !== ""
+      )
+        fd.append("discount", String(form.discount));
+
       fd.append("stock_count", String(form.stock_count || 0));
       if (form.description) fd.append("description", form.description);
       if (form.image) fd.append("image", form.image);
@@ -179,13 +204,13 @@ export default function MedicineAdminPage() {
         await Swal.fire({
           icon: "success",
           title: form.id ? "Medicine Updated" : "Medicine Added",
-          text: form.id 
+          text: form.id
             ? "Medicine details have been updated successfully"
             : "New medicine has been added to the inventory",
           timer: 2000,
           showConfirmButton: false,
         });
-        
+
         resetForm();
         fetchMedicines();
       } else {
@@ -218,6 +243,8 @@ export default function MedicineAdminPage() {
       measureType: "weight",
       measureValue: "",
       measureUnit: "mg",
+      price: "",
+      discount: "",
       stock_count: 0,
       description: "",
       image: null,
@@ -229,7 +256,7 @@ export default function MedicineAdminPage() {
     let measureType = "weight";
     let measureValue = "";
     let measureUnit = "mg";
-    
+
     try {
       const w = (m.weight_or_volume || "").toString().trim();
       if (w) {
@@ -260,11 +287,13 @@ export default function MedicineAdminPage() {
       measureType,
       measureValue,
       measureUnit,
+      price: m.price ?? "",
+      discount: m.discount ?? "",
       stock_count: m.stock_count || 0,
       description: m.description || "",
       image: null,
     });
-    
+
     if (fileRef.current) fileRef.current.value = "";
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -280,16 +309,16 @@ export default function MedicineAdminPage() {
       confirmButtonColor: "#dc2626",
       cancelButtonColor: "#6b7280",
     });
-    
+
     if (!res.isConfirmed) return;
-    
+
     try {
       const token = localStorage.getItem("token");
       const r = await fetch(api(`/api/pharmacy/products/${id}/`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (r.ok) {
         await Swal.fire({
           icon: "success",
@@ -319,9 +348,20 @@ export default function MedicineAdminPage() {
   };
 
   const getStockStatus = (stock: number) => {
-    if (stock === 0) return { label: "Out of Stock", color: "bg-red-100 text-red-800 border-red-200" };
-    if (stock <= 10) return { label: "Low Stock", color: "bg-amber-100 text-amber-800 border-amber-200" };
-    return { label: "In Stock", color: "bg-green-100 text-green-800 border-green-200" };
+    if (stock === 0)
+      return {
+        label: "Out of Stock",
+        color: "bg-red-100 text-red-800 border-red-200",
+      };
+    if (stock <= 10)
+      return {
+        label: "Low Stock",
+        color: "bg-amber-100 text-amber-800 border-amber-200",
+      };
+    return {
+      label: "In Stock",
+      color: "bg-green-100 text-green-800 border-green-200",
+    };
   };
 
   return (
@@ -329,7 +369,9 @@ export default function MedicineAdminPage() {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Medicine Management</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Medicine Management
+          </h2>
           <p className="text-gray-600 mt-1">
             Manage medicine inventory, categories, and product details
           </p>
@@ -348,7 +390,9 @@ export default function MedicineAdminPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-gray-900">{medicines.length}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {medicines.length}
+                </p>
                 <p className="text-sm text-gray-600">Total Medicines</p>
               </div>
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center">
@@ -362,7 +406,9 @@ export default function MedicineAdminPage() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-2xl font-bold text-gray-900">{categories.length}</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {categories.length}
+                </p>
                 <p className="text-sm text-gray-600">Categories</p>
               </div>
               <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
@@ -377,7 +423,7 @@ export default function MedicineAdminPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {medicines.filter(m => m.stock_count === 0).length}
+                  {medicines.filter((m) => m.stock_count === 0).length}
                 </p>
                 <p className="text-sm text-gray-600">Out of Stock</p>
               </div>
@@ -393,7 +439,11 @@ export default function MedicineAdminPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-2xl font-bold text-gray-900">
-                  {medicines.filter(m => m.stock_count > 0 && m.stock_count <= 10).length}
+                  {
+                    medicines.filter(
+                      (m) => m.stock_count > 0 && m.stock_count <= 10
+                    ).length
+                  }
                 </p>
                 <p className="text-sm text-gray-600">Low Stock</p>
               </div>
@@ -420,7 +470,10 @@ export default function MedicineAdminPage() {
           <CardContent className="p-6">
             <div className="space-y-4">
               <div>
-                <Label htmlFor="categoryName" className="text-sm font-semibold text-gray-700 mb-2 block">
+                <Label
+                  htmlFor="categoryName"
+                  className="text-sm font-semibold text-gray-700 mb-2 block"
+                >
                   Add New Category
                 </Label>
                 <div className="flex gap-3">
@@ -431,7 +484,7 @@ export default function MedicineAdminPage() {
                     placeholder="Enter category name"
                     className="flex-1 border-2 border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl"
                   />
-                  <Button 
+                  <Button
                     onClick={handleAddCategory}
                     className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-500/90 hover:to-emerald-600/90"
                   >
@@ -448,7 +501,11 @@ export default function MedicineAdminPage() {
                   </Label>
                   <div className="flex flex-wrap gap-2">
                     {categories.map((category) => (
-                      <Badge key={category.id} variant="secondary" className="bg-blue-50 text-blue-700 border-blue-200">
+                      <Badge
+                        key={category.id}
+                        variant="secondary"
+                        className="bg-blue-50 text-blue-700 border-blue-200"
+                      >
                         {category.name}
                       </Badge>
                     ))}
@@ -473,7 +530,10 @@ export default function MedicineAdminPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="medicineName" className="text-sm font-semibold text-gray-700">
+                  <Label
+                    htmlFor="medicineName"
+                    className="text-sm font-semibold text-gray-700"
+                  >
                     Medicine Name *
                   </Label>
                   <Input
@@ -486,13 +546,18 @@ export default function MedicineAdminPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category" className="text-sm font-semibold text-gray-700">
+                  <Label
+                    htmlFor="category"
+                    className="text-sm font-semibold text-gray-700"
+                  >
                     Category
                   </Label>
                   <select
                     id="category"
                     value={form.category_id ?? ""}
-                    onChange={(e) => setForm({ ...form, category_id: e.target.value || null })}
+                    onChange={(e) =>
+                      setForm({ ...form, category_id: e.target.value || null })
+                    }
                     className="w-full border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl p-2"
                   >
                     <option value="">Select category</option>
@@ -506,7 +571,10 @@ export default function MedicineAdminPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="brand" className="text-sm font-semibold text-gray-700">
+                <Label
+                  htmlFor="brand"
+                  className="text-sm font-semibold text-gray-700"
+                >
                   Brand / Company
                 </Label>
                 <Input
@@ -529,7 +597,13 @@ export default function MedicineAdminPage() {
                       name="measureType"
                       value="weight"
                       checked={form.measureType === "weight"}
-                      onChange={() => setForm({ ...form, measureType: "weight", measureUnit: "mg" })}
+                      onChange={() =>
+                        setForm({
+                          ...form,
+                          measureType: "weight",
+                          measureUnit: "mg",
+                        })
+                      }
                       className="text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm">Weight</span>
@@ -540,7 +614,13 @@ export default function MedicineAdminPage() {
                       name="measureType"
                       value="volume"
                       checked={form.measureType === "volume"}
-                      onChange={() => setForm({ ...form, measureType: "volume", measureUnit: "ml" })}
+                      onChange={() =>
+                        setForm({
+                          ...form,
+                          measureType: "volume",
+                          measureUnit: "ml",
+                        })
+                      }
                       className="text-blue-600 focus:ring-blue-500"
                     />
                     <span className="text-sm">Volume</span>
@@ -550,14 +630,20 @@ export default function MedicineAdminPage() {
                 <div className="flex gap-3">
                   <Input
                     type="text"
-                    placeholder={form.measureType === "weight" ? "e.g. 500" : "e.g. 5"}
+                    placeholder={
+                      form.measureType === "weight" ? "e.g. 500" : "e.g. 5"
+                    }
                     value={form.measureValue}
-                    onChange={(e) => setForm({ ...form, measureValue: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, measureValue: e.target.value })
+                    }
                     className="flex-1 border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl"
                   />
                   <select
                     value={form.measureUnit}
-                    onChange={(e) => setForm({ ...form, measureUnit: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, measureUnit: e.target.value })
+                    }
                     className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl p-2"
                   >
                     {form.measureType === "weight" ? (
@@ -578,7 +664,10 @@ export default function MedicineAdminPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="stock" className="text-sm font-semibold text-gray-700">
+                  <Label
+                    htmlFor="stock"
+                    className="text-sm font-semibold text-gray-700"
+                  >
                     Stock Count
                   </Label>
                   <Input
@@ -586,13 +675,58 @@ export default function MedicineAdminPage() {
                     type="number"
                     placeholder="Enter stock quantity"
                     value={form.stock_count}
-                    onChange={(e) => setForm({ ...form, stock_count: Number(e.target.value) })}
+                    onChange={(e) =>
+                      setForm({ ...form, stock_count: Number(e.target.value) })
+                    }
                     className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="image" className="text-sm font-semibold text-gray-700">
+                  <Label
+                    htmlFor="price"
+                    className="text-sm font-semibold text-gray-700"
+                  >
+                    Price
+                  </Label>
+                  <Input
+                    id="price"
+                    type="number"
+                    step="0.01"
+                    placeholder="Enter price"
+                    value={form.price}
+                    onChange={(e) =>
+                      setForm({ ...form, price: e.target.value })
+                    }
+                    className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="discount"
+                    className="text-sm font-semibold text-gray-700"
+                  >
+                    Discount (%)
+                  </Label>
+                  <Input
+                    id="discount"
+                    type="number"
+                    step="0.01"
+                    placeholder="e.g. 10 for 10%"
+                    value={form.discount}
+                    onChange={(e) =>
+                      setForm({ ...form, discount: e.target.value })
+                    }
+                    className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="image"
+                    className="text-sm font-semibold text-gray-700"
+                  >
                     Medicine Image
                   </Label>
                   <div className="flex gap-2">
@@ -609,14 +743,19 @@ export default function MedicineAdminPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description" className="text-sm font-semibold text-gray-700">
+                <Label
+                  htmlFor="description"
+                  className="text-sm font-semibold text-gray-700"
+                >
                   Description
                 </Label>
                 <Textarea
                   id="description"
                   placeholder="Enter medicine description"
                   value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
                   className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl min-h-[80px]"
                 />
               </div>
@@ -643,7 +782,11 @@ export default function MedicineAdminPage() {
                     </>
                   ) : (
                     <>
-                      {form.id ? <Edit className="w-4 h-4 mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+                      {form.id ? (
+                        <Edit className="w-4 h-4 mr-2" />
+                      ) : (
+                        <Plus className="w-4 h-4 mr-2" />
+                      )}
                       {form.id ? "Update Medicine" : "Add Medicine"}
                     </>
                   )}
@@ -657,35 +800,91 @@ export default function MedicineAdminPage() {
       {/* Products Table */}
       <Card className="border-0 shadow-xl bg-white/90 backdrop-blur-sm overflow-hidden">
         <CardHeader className="bg-gradient-to-r from-gray-50 to-purple-50/50 border-b">
-          <CardTitle className="flex items-center gap-3 text-xl">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-              <Package className="w-5 h-5 text-white" />
+          <div className="flex items-center justify-between w-full">
+            <CardTitle className="flex items-center gap-3 text-xl">
+              <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                <Package className="w-5 h-5 text-white" />
+              </div>
+              Medicine Inventory
+              <Badge
+                variant="secondary"
+                className="bg-purple-100 text-purple-800 ml-2"
+              >
+                {filteredMedicines.length} items
+              </Badge>
+            </CardTitle>
+
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search medicines..."
+                  className="pl-9 pr-3 w-64"
+                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              </div>
+
+              <select
+                value={filterCategoryId ?? ""}
+                onChange={(e) =>
+                  setFilterCategoryId(
+                    e.target.value ? Number(e.target.value) : null
+                  )
+                }
+                className="border-2 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl p-2"
+              >
+                <option value="">All categories</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
-            Medicine Inventory
-            <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-              {medicines.length} items
-            </Badge>
-          </CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b bg-gray-50/80">
-                  <th className="text-left p-4 font-semibold text-gray-900">Image</th>
-                  <th className="text-left p-4 font-semibold text-gray-900">Medicine</th>
-                  <th className="text-left p-4 font-semibold text-gray-900">Category</th>
-                  <th className="text-left p-4 font-semibold text-gray-900">Brand</th>
-                  <th className="text-left p-4 font-semibold text-gray-900">Measurement</th>
-                  <th className="text-left p-4 font-semibold text-gray-900">Stock</th>
-                  <th className="text-left p-4 font-semibold text-gray-900">Actions</th>
+                  <th className="text-left p-4 font-semibold text-gray-900">
+                    Image
+                  </th>
+                  <th className="text-left p-4 font-semibold text-gray-900">
+                    Medicine
+                  </th>
+                  <th className="text-left p-4 font-semibold text-gray-900">
+                    Category
+                  </th>
+                  <th className="text-left p-4 font-semibold text-gray-900">
+                    Brand
+                  </th>
+                  <th className="text-left p-4 font-semibold text-gray-900">
+                    Measurement
+                  </th>
+                  <th className="text-left p-4 font-semibold text-gray-900">
+                    Price
+                  </th>
+                  <th className="text-left p-4 font-semibold text-gray-900">
+                    Stock
+                  </th>
+                  <th className="text-left p-4 font-semibold text-gray-900">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {medicines.map((medicine) => {
                   const stockStatus = getStockStatus(medicine.stock_count);
+                  const priceNum = Number(medicine.price) || 0;
+                  const discountNum = Number(medicine.discount) || 0;
                   return (
-                    <tr key={medicine.id} className="border-b hover:bg-gray-50/50 transition-colors">
+                    <tr
+                      key={medicine.id}
+                      className="border-b hover:bg-gray-50/50 transition-colors"
+                    >
                       <td className="p-4">
                         {medicine.image ? (
                           <img
@@ -701,27 +900,58 @@ export default function MedicineAdminPage() {
                       </td>
                       <td className="p-4">
                         <div>
-                          <p className="font-semibold text-gray-900">{medicine.name}</p>
+                          <p className="font-semibold text-gray-900">
+                            {medicine.name}
+                          </p>
                           {medicine.description && (
-                            <p className="text-xs text-gray-500 line-clamp-1">{medicine.description}</p>
+                            <p className="text-xs text-gray-500 line-clamp-1">
+                              {medicine.description}
+                            </p>
                           )}
                         </div>
                       </td>
                       <td className="p-4">
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                        <Badge
+                          variant="outline"
+                          className="bg-blue-50 text-blue-700 border-blue-200"
+                        >
                           {medicine.category?.name || "Uncategorized"}
                         </Badge>
                       </td>
                       <td className="p-4">
-                        <span className="text-gray-700">{medicine.brand || "-"}</span>
+                        <span className="text-gray-700">
+                          {medicine.brand || "-"}
+                        </span>
                       </td>
                       <td className="p-4">
-                        <span className="text-gray-700">{medicine.weight_or_volume || "-"}</span>
+                        <span className="text-gray-700">
+                          {medicine.weight_or_volume || "-"}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-gray-900">
+                            Rs. {priceNum.toFixed(2)}
+                          </span>
+                          {discountNum > 0 && (
+                            <Badge
+                              variant="secondary"
+                              className="bg-amber-100 text-amber-800"
+                            >
+                              -{discountNum}%
+                            </Badge>
+                          )}
+                        </div>
                       </td>
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <span className="font-semibold text-gray-900">{medicine.stock_count}</span>
-                          <Badge variant="outline" className={stockStatus.color}>
+                          <span className="font-semibold text-gray-900">
+                            {medicine.stock_count}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className={stockStatus.color}
+                          >
                             {stockStatus.label}
                           </Badge>
                         </div>
@@ -757,8 +987,12 @@ export default function MedicineAdminPage() {
                 <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Package className="w-8 h-8 text-gray-400" />
                 </div>
-                <p className="text-gray-600 text-lg font-medium">No medicines found</p>
-                <p className="text-gray-500 text-sm mt-1">Add your first medicine to get started</p>
+                <p className="text-gray-600 text-lg font-medium">
+                  No medicines found
+                </p>
+                <p className="text-gray-500 text-sm mt-1">
+                  Add your first medicine to get started
+                </p>
               </div>
             )}
 

@@ -33,6 +33,10 @@ export default function PharmacistDashboard() {
     setLoading(true);
     try {
       const token = localStorage.getItem("token");
+      if (!token)
+        console.warn(
+          "No auth token found in localStorage; API calls may be forbidden"
+        );
 
       // Products summary
       const prodRes = await fetch(api(`/api/pharmacy/products/`), {
@@ -66,6 +70,17 @@ export default function PharmacistDashboard() {
         const pd = await presRes.json();
         if (pd.success) {
           setPrescriptionsCount((pd.prescriptions || []).length);
+        }
+      } else {
+        if (presRes.status === 403) {
+          console.warn(
+            "Prescriptions fetch returned 403 Forbidden. Check backend permissions for pharmacist role or token validity."
+          );
+        } else {
+          const text = await presRes
+            .text()
+            .catch(() => "[unable to read response]");
+          console.warn("Prescriptions fetch failed:", presRes.status, text);
         }
       }
     } catch (e) {
