@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
+from datetime import timedelta
 import random
 import string
 
@@ -80,33 +81,34 @@ class OTP(models.Model):
     email = models.EmailField()
     otp_code = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
-    expires_at = models.DateTimeField()
     is_used = models.BooleanField(default=False)
 
     def is_valid(self):
-        return not self.is_used and timezone.now() < self.expires_at
-
+        """Check if OTP is still valid (10 minutes)"""
+        return timezone.now() <= self.created_at + timedelta(minutes=10)
+    
     def mark_used(self):
+        """Mark OTP as used"""
         self.is_used = True
         self.save()
 
     @classmethod
     def generate_otp(cls, email):
-        # Generate 6-digit OTP
-        otp_code = ''.join(random.choices(string.digits, k=6))
-        expires_at = timezone.now() + timezone.timedelta(minutes=10)
-        
-        # Deactivate any existing OTPs for this email
+        """Generate a new OTP for email"""
+        # Invalidate any existing OTPs for this email
         cls.objects.filter(email=email, is_used=False).update(is_used=True)
         
-        return cls.objects.create(
-            email=email,
-            otp_code=otp_code,
-            expires_at=expires_at
-        )
+        # Generate 6-digit OTP
+        otp_code = str(random.randint(100000, 999999))
+        
+        # Create new OTP
+        return cls.objects.create(email=email, otp_code=otp_code)
 
     def __str__(self):
         return f"{self.email} - {self.otp_code}"
+
+    class Meta:
+        db_table = 'otp'
 
 class PasswordResetToken(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

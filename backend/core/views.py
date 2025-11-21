@@ -15,6 +15,10 @@ from .serializers import (
     ResetPasswordSerializer,
     CustomerProfileSerializer,
 )
+from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
@@ -105,25 +109,67 @@ class ForgotPasswordView(APIView):
         if serializer.is_valid():
             email = serializer.validated_data['email']
             
-            # Generate OTP
-            otp = OTP.generate_otp(email)
-            
-            # In a real application, send OTP via email
-            # For demo purposes, we'll return it in the response
-            print(f"OTP for {email}: {otp.otp_code}")  # Remove this in production
-            
-            return Response({
-                'success': True,
-                'message': 'OTP sent to your email',
-                'otp': otp.otp_code  # Remove this in production - only for demo
-            }, status=status.HTTP_200_OK)
+            try:
+                # Generate OTP
+                otp = OTP.generate_otp(email)
+                
+                # Send OTP via email
+                try:
+                    from django.core.mail import send_mail
+                    subject = 'Password Reset OTP - Arogya Medical'
+                    message = f'''
+Hello,
+
+Your OTP for password reset is: {otp.otp_code}
+
+This OTP will expire in 10 minutes.
+
+If you didn't request this, please ignore this email.
+
+Best regards,
+Arogya Medical Team
+'''
+                    from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', None)
+                    send_mail(
+                        subject,
+                        message,
+                        from_email,
+                        [email],
+                        fail_silently=False,
+                    )
+
+                    return Response({
+                        'success': True,
+                        'message': 'OTP sent to your email'
+                    }, status=status.HTTP_200_OK)
+
+                except Exception as email_error:
+                    logger.exception("Email sending failed for OTP: %s", email_error)
+                    # In development, return the OTP in the response so tests can continue
+                    if getattr(settings, 'DEBUG', False):
+                        return Response({
+                            'success': True,
+                            'message': 'OTP generated (email failed)',
+                            'otp': otp.otp_code
+                        }, status=status.HTTP_200_OK)
+                    # In production, do not expose the OTP in the response
+                    return Response({
+                        'success': True,
+                        'message': 'OTP generated (email failed)'
+                    }, status=status.HTTP_200_OK)
+                
+            except Exception as e:
+                return Response({
+                    'success': False,
+                    'message': 'Error generating OTP'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
         return Response({
             'success': False,
-            'message': 'Failed to send OTP',
+            'message': 'Failed to process request',
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
+    
 class VerifyOTPView(APIView):
     permission_classes = [AllowAny]
 
@@ -145,7 +191,7 @@ class VerifyOTPView(APIView):
             'message': 'OTP verification failed',
             'errors': serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
-
+    
 class ResetPasswordView(APIView):
     permission_classes = [AllowAny]
 
