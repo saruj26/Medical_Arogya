@@ -73,10 +73,40 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             'diagnosis',
             'notes',
             'follow_up_date',
+            'dispensed',
+            'dispensed_by',
+            'dispensed_at',
             'created_at',
             'updated_at'
         ]
         read_only_fields = ('created_at', 'updated_at')
+
+
+class PrescriptionPharmacistSerializer(serializers.ModelSerializer):
+    # Only expose fields relevant for pharmacist: appointment id/date/time, patient identifiers and medications
+    patient_name = serializers.CharField(source='patient.name', read_only=True)
+    patient_phone = serializers.CharField(source='patient.phone', read_only=True)
+    patient_email = serializers.CharField(source='patient.email', read_only=True)
+    appointment_id = serializers.CharField(source='appointment.appointment_id', read_only=True)
+    appointment_date = serializers.DateField(source='appointment.appointment_date', read_only=True)
+    appointment_time = serializers.TimeField(source='appointment.appointment_time', read_only=True)
+
+    class Meta:
+        model = Prescription
+        fields = (
+            'id', 'appointment', 'appointment_id', 'appointment_date', 'appointment_time',
+            'patient', 'patient_name', 'patient_phone', 'patient_email',
+            'medications', 'instructions', 'dispensed', 'dispensed_by', 'dispensed_at',
+            'created_at'
+        )
+        read_only_fields = ('id', 'created_at', 'dispensed', 'dispensed_by', 'dispensed_at')
+
+
+class PrescriptionDispenseSerializer(serializers.Serializer):
+    # Payload for marking as dispensed
+    dispensed = serializers.BooleanField(required=True)
+    # option to attach a sale id if created on dispense
+    sale_id = serializers.IntegerField(required=False, allow_null=True)
 
 class PrescriptionCreateSerializer(serializers.ModelSerializer):
     class Meta:

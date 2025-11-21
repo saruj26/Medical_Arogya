@@ -2,6 +2,7 @@ from django.db import models
 from core.models import User
 from doctor.models import DoctorProfile
 from django.utils import timezone
+from django.conf import settings
 
 class Appointment(models.Model):
     STATUS_CHOICES = [
@@ -65,6 +66,10 @@ class Prescription(models.Model):
     follow_up_date = models.DateField(null=True, blank=True)  # Optional follow-up date
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    # Pharmacist dispensing info
+    dispensed = models.BooleanField(default=False)
+    dispensed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='dispensed_prescriptions')
+    dispensed_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"Prescription for {self.patient.name} - {self.appointment.appointment_id}"

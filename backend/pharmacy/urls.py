@@ -6,4 +6,5 @@ urlpatterns = [
     path('categories/<int:pk>/', views.CategoryDetailView.as_view(), name='pharmacy-category-detail'),
     path('products/', views.MedicineListCreateView.as_view(), name='pharmacy-products'),
     path('products/<int:pk>/', views.MedicineDetailView.as_view(), name='pharmacy-product-detail'),
+    path('sales/', views.SaleCreateView.as_view(), name='pharmacy-sales'),
 ]

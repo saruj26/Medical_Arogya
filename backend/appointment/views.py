@@ -7,7 +7,13 @@ from django.db.models import Count, Sum
 from .models import Appointment, Prescription
 from doctor.models import DoctorProfile
 from django.core.exceptions import ObjectDoesNotExist
-from .serializers import AppointmentSerializer, PrescriptionSerializer, PrescriptionCreateSerializer
+from .serializers import (
+    AppointmentSerializer,
+    PrescriptionSerializer,
+    PrescriptionCreateSerializer,
+    PrescriptionPharmacistSerializer,
+    PrescriptionDispenseSerializer,
+)
 from decimal import Decimal
 from django.db import transaction
 from django.utils import timezone
@@ -121,6 +127,9 @@ class PrescriptionListView(APIView):
             prescriptions = Prescription.objects.filter(patient=request.user).select_related('doctor', 'doctor__user', 'appointment')
         elif request.user.role == 'doctor':
             prescriptions = Prescription.objects.filter(doctor__user=request.user).select_related('patient', 'appointment')
+        elif request.user.role == 'pharmacist':
+            # pharmacists: return all prescriptions (or we can filter by clinic/organization)
+            prescriptions = Prescription.objects.select_related('patient', 'appointment', 'doctor')
         else:
             return Response({
                 'success': False,
@@ -133,6 +142,61 @@ class PrescriptionListView(APIView):
             'prescriptions': serializer.data
         })
 
+
+class PharmacistPrescriptionListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # allow pharmacists and staff/admins
+        if request.user.role != 'pharmacist' and not getattr(request.user, 'is_staff', False) and getattr(request.user, 'role', None) != 'admin':
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        qs = Prescription.objects.select_related('appointment', 'patient', 'doctor').order_by('-created_at')
+        serializer = PrescriptionPharmacistSerializer(qs, many=True)
+        return Response({'success': True, 'prescriptions': serializer.data})
+
+
+class PrescriptionDispenseView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, pk):
+        # Only pharmacist or admin/staff can mark dispensed
+        if request.user.role != 'pharmacist' and not getattr(request.user, 'is_staff', False) and getattr(request.user, 'role', None) != 'admin':
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            prescription = Prescription.objects.get(pk=pk)
+        except Prescription.DoesNotExist:
+            return Response({'success': False, 'message': 'Prescription not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = PrescriptionDispenseSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+
+        data = serializer.validated_data
+        dispensed = data.get('dispensed', True)
+        sale_id = data.get('sale_id', None)
+
+        if dispensed:
+            prescription.dispensed = True
+            prescription.dispensed_by = request.user
+            prescription.dispensed_at = timezone.now()
+            prescription.save(update_fields=['dispensed', 'dispensed_by', 'dispensed_at'])
+            
+            # Return success response
+            return Response({
+                'success': True, 
+                'message': 'Prescription marked as dispensed', 
+                'sale_id': sale_id
+            })
+        else:
+            # allow unmarking
+            prescription.dispensed = False
+            prescription.dispensed_by = None
+            prescription.dispensed_at = None
+            prescription.save(update_fields=['dispensed', 'dispensed_by', 'dispensed_at'])
+            return Response({'success': True, 'message': 'Prescription marked as not dispensed'})
+        
 class PrescriptionCreateView(APIView):
     permission_classes = [IsAuthenticated]
     

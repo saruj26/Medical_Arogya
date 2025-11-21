@@ -5,8 +5,13 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.parsers import MultiPartParser, FormParser
 from .models import MedicineCategory, Medicine
 from .serializers import MedicineCategorySerializer, MedicineSerializer
+from .serializers import SaleSerializer
 from django.utils.text import slugify
 import logging
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import generics
+from rest_framework import serializers
+from django.db import transaction
 
 logger = logging.getLogger(__name__)
 
@@ -127,3 +132,27 @@ class MedicineDetailView(APIView):
             return Response({'success': False, 'message': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
         obj.delete()
         return Response({'success': True, 'message': 'Medicine deleted'})
+
+
+class SaleCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        # only pharmacists or staff/admin can create sales
+        role = getattr(request.user, 'role', None)
+        if role not in ('pharmacist', 'admin') and not getattr(request.user, 'is_staff', False):
+            return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = SaleSerializer(data=request.data, context={'request': request})
+        if serializer.is_valid():
+            try:
+                with transaction.atomic():
+                    sale = serializer.save()
+            except serializers.ValidationError as e:
+                return Response({'success': False, 'errors': e.detail}, status=status.HTTP_400_BAD_REQUEST)
+            # re-serialize the saved instance to include calculated fields
+            from .serializers import SaleSerializer as _SaleSerializer
+            out = _SaleSerializer(sale, context={'request': request}).data
+            return Response({'success': True, 'sale': out}, status=status.HTTP_201_CREATED)
+
+        return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
