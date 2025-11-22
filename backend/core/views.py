@@ -177,9 +177,9 @@ class VerifyOTPView(APIView):
         serializer = VerifyOTPSerializer(data=request.data)
         if serializer.is_valid():
             otp_instance = serializer.validated_data['otp_instance']
-            
-            # Mark OTP as used
-            otp_instance.mark_used()
+            # NOTE: do not mark the OTP as used here — keep it available
+            # so the same OTP can be consumed by the ResetPasswordView.
+            # The OTP will be marked as used when the password is reset.
             
             return Response({
                 'success': True,

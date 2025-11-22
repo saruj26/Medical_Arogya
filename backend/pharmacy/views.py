@@ -25,7 +25,8 @@ class CategoryListCreateView(APIView):
         return Response({'success': True, 'categories': serializer.data})
 
     def post(self, request):
-        if getattr(request.user, 'role', None) != 'admin' and not getattr(request.user, 'is_staff', False):
+        # allow admin, staff, or pharmacist to manage medicines
+        if getattr(request.user, 'role', None) not in ('admin', 'pharmacist') and not getattr(request.user, 'is_staff', False):
             return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
         name = request.data.get('name')
@@ -42,7 +43,8 @@ class CategoryDetailView(APIView):
     permission_classes = [IsAuthenticated]
 
     def put(self, request, pk):
-        if getattr(request.user, 'role', None) != 'admin' and not getattr(request.user, 'is_staff', False):
+        # allow admin, staff, or pharmacist to update medicines
+        if getattr(request.user, 'role', None) not in ('admin', 'pharmacist') and not getattr(request.user, 'is_staff', False):
             return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
         try:
@@ -59,7 +61,8 @@ class CategoryDetailView(APIView):
         return Response({'success': True, 'category': MedicineCategorySerializer(cat).data})
 
     def delete(self, request, pk):
-        if getattr(request.user, 'role', None) != 'admin' and not getattr(request.user, 'is_staff', False):
+        # allow admin, staff, or pharmacist to delete medicines
+        if getattr(request.user, 'role', None) not in ('admin', 'pharmacist') and not getattr(request.user, 'is_staff', False):
             return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
         try:

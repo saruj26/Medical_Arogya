@@ -9,7 +9,7 @@ import { AlertCircle, CheckCircle } from "lucide-react";
 import { AuthMode } from "./auth-modal";
 
 interface OTPVerificationFormProps {
-  onModeChange: (mode: AuthMode, email?: string) => void;
+  onModeChange: (mode: AuthMode, email?: string, otp?: string) => void; // Add otp parameter
   onSuccess: () => void;
   email: string;
   setEmail: (email: string) => void;
@@ -26,10 +26,15 @@ export function OTPVerificationForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const API_BASE_URL = api("");
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate OTP
+    if (!otp || otp.length !== 6) {
+      setError("Please enter a valid 6-digit OTP");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
     setSuccess("");
@@ -46,18 +51,17 @@ export function OTPVerificationForm({
       const data = await response.json();
 
       if (data.success) {
-        setSuccess("OTP verified!");
+        setSuccess("OTP verified successfully!");
         setTimeout(() => {
-          onModeChange("reset", email);
+          onModeChange("reset", email, otp); // Pass OTP here
         }, 1000);
       } else {
         setError(data.message || "Invalid OTP. Please try again.");
       }
     } catch (err) {
-      const message =
-        err instanceof Error && /Failed to fetch|network/i.test(err.message)
-          ? `Cannot connect to backend at ${API_BASE_URL}. Is the Django server running?`
-          : "An error occurred. Please try again.";
+      const message = err instanceof Error 
+        ? err.message 
+        : "An error occurred. Please try again.";
       setError(message);
       console.error("OTP verification error:", err);
     } finally {
@@ -67,6 +71,13 @@ export function OTPVerificationForm({
 
   return (
     <div className="space-y-4">
+      <div className="text-center mb-4">
+        <h3 className="text-lg font-semibold text-gray-900">Verify OTP</h3>
+        <p className="text-sm text-gray-600">
+          Enter the OTP sent to {email}
+        </p>
+      </div>
+
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
           <AlertCircle className="w-4 h-4 text-red-600" />
@@ -91,27 +102,39 @@ export function OTPVerificationForm({
             type="text"
             placeholder="Enter 6-digit OTP"
             value={otp}
-            onChange={(e) => setOtp(e.target.value)}
+            onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
             className="h-10 mt-1 text-center text-lg tracking-widest"
             maxLength={6}
             required
+            disabled={isLoading}
           />
         </div>
 
         <Button
           type="submit"
           className="w-full h-10 bg-[#1656a4] hover:bg-[#1656a4]/90"
-          disabled={isLoading}
+          disabled={isLoading || otp.length !== 6}
         >
           {isLoading ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Loading...
+              Verifying...
             </div>
           ) : (
             "Verify OTP"
           )}
         </Button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => onModeChange("forgot", email)}
+            className="text-sm text-[#1656a4] hover:underline"
+            disabled={isLoading}
+          >
+            Back to Forgot Password
+          </button>
+        </div>
       </form>
     </div>
   );

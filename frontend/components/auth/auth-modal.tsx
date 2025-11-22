@@ -30,10 +30,12 @@ export function AuthModal({
 }: AuthModalProps) {
   const [mode, setMode] = useState<AuthMode>(initialMode);
   const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
 
-  const switchMode = (newMode: AuthMode, userEmail?: string) => {
+  const switchMode = (newMode: AuthMode, userEmail?: string, otpCode?: string) => {
     setMode(newMode);
     if (userEmail) setEmail(userEmail);
+    if (otpCode) setOtp(otpCode);
   };
 
   const getTitle = () => {
@@ -94,7 +96,10 @@ export function AuthModal({
       case "otp":
         return <OTPVerificationForm {...commonProps} />;
       case "reset":
-        return <ResetPasswordForm {...commonProps} />;
+        return <ResetPasswordForm 
+        {...commonProps} 
+        otp={otp}
+        />;
       default:
         return <LoginForm {...commonProps} />;
     }

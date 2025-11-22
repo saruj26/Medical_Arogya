@@ -46,7 +46,7 @@ export default function PharmacistLayout({
     const email = localStorage.getItem("userEmail");
 
     if (role !== "pharmacist") {
-      router.push("/auth");
+      router.push("/");
       return;
     }
 
@@ -105,6 +105,7 @@ export default function PharmacistLayout({
 
   const getActiveTab = () => {
     if (pathname?.includes("/medicine")) return "medicine";
+    if (pathname?.includes("/products")) return "products";
     if (pathname?.includes("/prescriptions")) return "prescriptions";
     if (pathname?.includes("/settings")) return "settings";
     return "dashboard";
@@ -285,6 +286,12 @@ export default function PharmacistLayout({
                 <NavItem
                   href="/pharmacist/medicine"
                   value="medicine"
+                  label="Pharmacy Sales"
+                  icon={<Pill className="w-4 h-4" />}
+                />
+                <NavItem
+                  href="/pharmacist/products"
+                  value="products"
                   label="Medicine Management"
                   icon={<Pill className="w-4 h-4" />}
                 />
