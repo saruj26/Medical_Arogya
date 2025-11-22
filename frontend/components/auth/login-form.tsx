@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, AlertCircle, CheckCircle } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, CheckCircle, Mail, Lock, User } from "lucide-react";
 import { AuthMode } from "./auth-modal";
 import api from "@/lib/api";
 
@@ -61,7 +61,6 @@ export function LoginForm({
       }
 
       if (response.ok && data.success && data.user && data.token) {
-        // Normalize role to handle legacy/misspelled values (e.g. "phamacist")
         const rawRole = (data.user && data.user.role) || "";
         const normalizedRole = rawRole === "phamacist" ? "pharmacist" : rawRole;
 
@@ -119,104 +118,125 @@ export function LoginForm({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* Status Messages */}
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-red-600" />
-          <span className="text-red-800 text-sm">{error}</span>
+          <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+          <span className="text-red-700 text-sm">{error}</span>
         </div>
       )}
 
       {success && (
         <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-          <CheckCircle className="w-4 h-4 text-green-600" />
-          <span className="text-green-800 text-sm">{success}</span>
+          <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+          <span className="text-green-700 text-sm">{success}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="email" className="text-sm font-medium">
-            Email
+        {/* Email Field */}
+        <div className="space-y-2">
+          <Label htmlFor="email" className="text-sm font-semibold text-gray-700">
+            Email Address
           </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="h-10 mt-1"
-            required
-          />
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="email"
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-11 pl-10 border-2 border-gray-200 focus:border-[#1656a4] transition-colors"
+              required
+            />
+          </div>
         </div>
 
-        <div>
-          <Label htmlFor="password" className="text-sm font-medium">
-            Password
-          </Label>
-          <div className="relative mt-1">
+        {/* Password Field */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-semibold text-gray-700">
+              Password
+            </Label>
+          </div>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
             <Input
               id="password"
               type={showPassword ? "text" : "password"}
-              placeholder="Enter password"
+              placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-10 pr-10"
+              className="h-11 pl-10 pr-12 border-2 border-gray-200 focus:border-[#1656a4] transition-colors"
               required
             />
             <Button
               type="button"
               variant="ghost"
               size="sm"
-              className="absolute right-0 top-0 h-10 px-3"
+              className="absolute right-1 top-1 h-9 w-9 p-0 hover:bg-gray-100"
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? (
-                <EyeOff className="h-4 w-4" />
+                <EyeOff className="h-4 w-4 text-gray-500" />
               ) : (
-                <Eye className="h-4 w-4" />
+                <Eye className="h-4 w-4 text-gray-500" />
               )}
             </Button>
           </div>
+           <button
+              type="button"
+              onClick={() => onModeChange("forgot", email)}
+              className="text-xs text-[#1656a4] hover:text-cyan-600 font-medium transition-colors"
+            >
+              Forgot Password?
+            </button>
         </div>
 
+        {/* Login Button */}
         <Button
           type="submit"
-          className="w-full h-10 bg-[#1656a4] hover:bg-[#1656a4]/90"
           disabled={isLoading}
+          className="w-full h-11 bg-gradient-to-r from-[#1656a4] to-cyan-600 hover:from-[#1656a4]/90 hover:to-cyan-600/90 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
         >
           {isLoading ? (
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              Loading...
+              Signing In...
             </div>
           ) : (
-            "Sign In"
+            "Sign In to Account"
           )}
         </Button>
       </form>
 
-      <div className="text-center">
-        <button
-          type="button"
-          onClick={() => onModeChange("forgot", email)}
-          className="text-sm text-[#1656a4] hover:underline"
-        >
-          Forgot Password?
-        </button>
+      {/* Divider */}
+      <div className="relative py-2">
+        <div className="absolute inset-0 flex items-center">
+          <div className="w-full border-t border-gray-200"></div>
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="px-3 bg-white text-gray-500">New to Arogya?</span>
+        </div>
       </div>
 
-      <div className="text-center">
-        <p className="text-sm text-gray-600 mb-2">Don't have an account?</p>
+      {/* Register Section */}
+      <div className="text-center space-y-3">
         <Button
           type="button"
           variant="outline"
-          size="sm"
           onClick={() => onModeChange("register", email)}
-          className="border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white"
+          className="w-full h-11 border-2 border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white font-medium transition-all duration-300"
         >
-          Create Account
+          <User className="w-4 h-4 mr-2" />
+          Create New Account
         </Button>
+        
+        <div className="text-xs text-gray-500">
+          Secure login • Your data is protected
+        </div>
       </div>
     </div>
   );

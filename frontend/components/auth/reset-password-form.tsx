@@ -5,8 +5,9 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, Lock, ArrowLeft, Shield } from "lucide-react";
 import { AuthMode } from "./auth-modal";
+import api from "@/lib/api";
 
 interface ResetPasswordFormProps {
   onModeChange: (mode: AuthMode, email?: string) => void;
@@ -14,8 +15,6 @@ interface ResetPasswordFormProps {
   email: string;
   otp: string;
 }
-
-import api from "@/lib/api";
 
 export function ResetPasswordForm({
   onModeChange,
@@ -114,67 +113,84 @@ export function ResetPasswordForm({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Reset Password</h3>
-        <p className="text-sm text-gray-600">
-          Enter your new password for {email}
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="text-center">
+        <div className="w-12 h-12 bg-gradient-to-br from-[#1656a4] to-cyan-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+          <Shield className="w-6 h-6 text-white" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900">Reset Password</h3>
+        <p className="text-sm text-gray-600 mt-1">
+          Create your new password for <span className="font-medium text-[#1656a4]">{email}</span>
         </p>
       </div>
 
+      {/* Status Messages */}
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-red-600" />
-          <span className="text-red-800 text-sm">{error}</span>
+          <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+          <span className="text-red-700 text-sm">{error}</span>
         </div>
       )}
 
       {success && (
         <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-          <CheckCircle className="w-4 h-4 text-green-600" />
-          <span className="text-green-800 text-sm">{success}</span>
+          <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+          <span className="text-green-700 text-sm">{success}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="newPassword" className="text-sm font-medium">
+        {/* New Password Field */}
+        <div className="space-y-2">
+          <Label htmlFor="newPassword" className="text-sm font-semibold text-gray-700">
             New Password
           </Label>
-          <Input
-            id="newPassword"
-            type="password"
-            placeholder="Enter new password (min. 6 characters)"
-            value={formData.newPassword}
-            onChange={(e) => updateFormData("newPassword", e.target.value)}
-            className="h-10 mt-1"
-            required
-            minLength={6}
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="newPassword"
+              type="password"
+              placeholder="Enter new password "
+              value={formData.newPassword}
+              onChange={(e) => updateFormData("newPassword", e.target.value)}
+              className="h-11 pl-10 border-2 border-gray-200 focus:border-[#1656a4] transition-colors"
+              required
+              minLength={6}
+              disabled={isLoading}
+            />
+          </div>
         </div>
 
-        <div>
-          <Label htmlFor="confirmPassword" className="text-sm font-medium">
+        {/* Confirm Password Field */}
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword" className="text-sm font-semibold text-gray-700">
             Confirm Password
           </Label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder="Confirm new password"
-            value={formData.confirmPassword}
-            onChange={(e) => updateFormData("confirmPassword", e.target.value)}
-            className="h-10 mt-1"
-            required
-            minLength={6}
-            disabled={isLoading}
-          />
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <Input
+              id="confirmPassword"
+              type="password"
+              placeholder="Confirm your new password"
+              value={formData.confirmPassword}
+              onChange={(e) => updateFormData("confirmPassword", e.target.value)}
+              className="h-11 pl-10 border-2 border-gray-200 focus:border-[#1656a4] transition-colors"
+              required
+              minLength={6}
+              disabled={isLoading}
+            />
+          </div>
+          <p className="text-xs text-gray-500">
+            Make sure both passwords match exactly
+          </p>
         </div>
 
+        {/* Reset Password Button */}
         <Button
           type="submit"
-          className="w-full h-10 bg-[#1656a4] hover:bg-[#1656a4]/90"
           disabled={isLoading || !formData.newPassword || !formData.confirmPassword || !otp}
+          className="w-full h-11 bg-gradient-to-r from-[#1656a4] to-cyan-600 hover:from-[#1656a4]/90 hover:to-cyan-600/90 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
         >
           {isLoading ? (
             <div className="flex items-center gap-2">
@@ -185,18 +201,25 @@ export function ResetPasswordForm({
             "Reset Password"
           )}
         </Button>
-
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={() => onModeChange("otp", email)}
-            className="text-sm text-[#1656a4] hover:underline"
-            disabled={isLoading}
-          >
-            Back to OTP Verification
-          </button>
-        </div>
       </form>
+
+      {/* Back Button */}
+      <div className="text-center">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onModeChange("otp", email)}
+          disabled={isLoading}
+          className="w-full h-11 border-2 border-gray-200 text-gray-700 hover:border-[#1656a4] hover:text-[#1656a4] font-medium transition-all duration-300"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to OTP Verification
+        </Button>
+        
+        <div className="text-xs text-gray-500 mt-3">
+          Your password will be securely updated
+        </div>
+      </div>
     </div>
   );
 }

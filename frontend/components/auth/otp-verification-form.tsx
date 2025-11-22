@@ -5,17 +5,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, CheckCircle } from "lucide-react";
+import { AlertCircle, CheckCircle, Shield, ArrowLeft } from "lucide-react";
 import { AuthMode } from "./auth-modal";
+import api from "@/lib/api";
 
 interface OTPVerificationFormProps {
-  onModeChange: (mode: AuthMode, email?: string, otp?: string) => void; // Add otp parameter
+  onModeChange: (mode: AuthMode, email?: string, otp?: string) => void;
   onSuccess: () => void;
   email: string;
   setEmail: (email: string) => void;
 }
-
-import api from "@/lib/api";
 
 export function OTPVerificationForm({
   onModeChange,
@@ -29,7 +28,6 @@ export function OTPVerificationForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate OTP
     if (!otp || otp.length !== 6) {
       setError("Please enter a valid 6-digit OTP");
       return;
@@ -53,7 +51,7 @@ export function OTPVerificationForm({
       if (data.success) {
         setSuccess("OTP verified successfully!");
         setTimeout(() => {
-          onModeChange("reset", email, otp); // Pass OTP here
+          onModeChange("reset", email, otp);
         }, 1000);
       } else {
         setError(data.message || "Invalid OTP. Please try again.");
@@ -70,50 +68,60 @@ export function OTPVerificationForm({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="text-center mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Verify OTP</h3>
-        <p className="text-sm text-gray-600">
-          Enter the OTP sent to {email}
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="text-center">
+        <div className="w-12 h-12 bg-gradient-to-br from-[#1656a4] to-cyan-600 rounded-xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+          <Shield className="w-6 h-6 text-white" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900">Verify OTP</h3>
+        <p className="text-sm text-gray-600 mt-1">
+          Enter the 6-digit code sent to <span className="font-medium text-[#1656a4]">{email}</span>
         </p>
       </div>
 
+      {/* Status Messages */}
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-red-600" />
-          <span className="text-red-800 text-sm">{error}</span>
+          <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+          <span className="text-red-700 text-sm">{error}</span>
         </div>
       )}
 
       {success && (
         <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-          <CheckCircle className="w-4 h-4 text-green-600" />
-          <span className="text-green-800 text-sm">{success}</span>
+          <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0" />
+          <span className="text-green-700 text-sm">{success}</span>
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <Label htmlFor="otp" className="text-sm font-medium">
-            Enter OTP
+        {/* OTP Field */}
+        <div className="space-y-2">
+          <Label htmlFor="otp" className="text-sm font-semibold text-gray-700">
+            Verification Code
           </Label>
           <Input
             id="otp"
             type="text"
-            placeholder="Enter 6-digit OTP"
+            placeholder="Enter 6-digit code"
             value={otp}
             onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-            className="h-10 mt-1 text-center text-lg tracking-widest"
+            className="h-11 text-center text-lg tracking-widest font-semibold border-2 border-gray-200 focus:border-[#1656a4] transition-colors"
             maxLength={6}
             required
             disabled={isLoading}
           />
+          <p className="text-xs text-gray-500 text-center">
+            Enter the 6-digit verification code
+          </p>
         </div>
 
+        {/* Verify Button */}
         <Button
           type="submit"
-          className="w-full h-10 bg-[#1656a4] hover:bg-[#1656a4]/90"
           disabled={isLoading || otp.length !== 6}
+          className="w-full h-11 bg-gradient-to-r from-[#1656a4] to-cyan-600 hover:from-[#1656a4]/90 hover:to-cyan-600/90 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
         >
           {isLoading ? (
             <div className="flex items-center gap-2">
@@ -121,21 +129,28 @@ export function OTPVerificationForm({
               Verifying...
             </div>
           ) : (
-            "Verify OTP"
+            "Verify Code"
           )}
         </Button>
-
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={() => onModeChange("forgot", email)}
-            className="text-sm text-[#1656a4] hover:underline"
-            disabled={isLoading}
-          >
-            Back to Forgot Password
-          </button>
-        </div>
       </form>
+
+      {/* Back Button */}
+      <div className="text-center">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onModeChange("forgot", email)}
+          disabled={isLoading}
+          className="w-full h-11 border-2 border-gray-200 text-gray-700 hover:border-[#1656a4] hover:text-[#1656a4] font-medium transition-all duration-300"
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back to Forgot Password
+        </Button>
+        
+        <div className="text-xs text-gray-500 mt-3">
+          Didn't receive the code? Check your spam folder or try again
+        </div>
+      </div>
     </div>
   );
 }
