@@ -27,6 +27,7 @@ import api from "@/lib/api";
 
 export default function MedicineAdminPage() {
   const [categories, setCategories] = useState<any[]>([]);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [medicines, setMedicines] = useState<any[]>([]);
   const [catName, setCatName] = useState("");
   const [loading, setLoading] = useState(false);
@@ -54,6 +55,8 @@ export default function MedicineAdminPage() {
   useEffect(() => {
     fetchCategories();
     fetchMedicines();
+    const role = localStorage.getItem("userRole");
+    setUserRole(role);
   }, []);
 
   const fetchCategories = async () => {
@@ -501,13 +504,82 @@ export default function MedicineAdminPage() {
                   </Label>
                   <div className="flex flex-wrap gap-2">
                     {categories.map((category) => (
-                      <Badge
-                        key={category.id}
-                        variant="secondary"
-                        className="bg-blue-50 text-blue-700 border-blue-200"
-                      >
-                        {category.name}
-                      </Badge>
+                      <div key={category.id} className="relative">
+                        <Badge
+                          variant="secondary"
+                          className="bg-blue-50 text-blue-700 border-blue-200 pr-8"
+                        >
+                          {category.name}
+                        </Badge>
+
+                        {/* show small delete X for admins or pharmacists */}
+                        {(userRole === "admin" ||
+                          userRole === "pharmacist") && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              const res = await Swal.fire({
+                                title: `Delete \"${category.name}\"?`,
+                                text: "This will permanently delete the category.",
+                                icon: "warning",
+                                showCancelButton: true,
+                                confirmButtonText: "Yes, delete",
+                                cancelButtonText: "Cancel",
+                                confirmButtonColor: "#dc2626",
+                              });
+
+                              if (!res.isConfirmed) return;
+
+                              try {
+                                const token = localStorage.getItem("token");
+                                const r = await fetch(
+                                  api(
+                                    `/api/pharmacy/categories/${category.id}/`
+                                  ),
+                                  {
+                                    method: "DELETE",
+                                    headers: {
+                                      Authorization: `Bearer ${token}`,
+                                    },
+                                  }
+                                );
+
+                                if (r.ok) {
+                                  await Swal.fire({
+                                    icon: "success",
+                                    title: "Category deleted",
+                                    timer: 1500,
+                                    showConfirmButton: false,
+                                  });
+                                  fetchCategories();
+                                } else {
+                                  const err = await r.json().catch(() => null);
+                                  await Swal.fire({
+                                    icon: "error",
+                                    title: "Delete failed",
+                                    text:
+                                      err?.message ||
+                                      "Unable to delete category",
+                                    confirmButtonColor: "#dc2626",
+                                  });
+                                }
+                              } catch (err) {
+                                console.error(err);
+                                await Swal.fire({
+                                  icon: "error",
+                                  title: "Delete failed",
+                                  text: "An error occurred while deleting",
+                                  confirmButtonColor: "#dc2626",
+                                });
+                              }
+                            }}
+                            className="absolute -top-2 -right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center text-red-600 border border-red-100 shadow-sm hover:bg-red-50"
+                            title={`Delete ${category.name}`}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>

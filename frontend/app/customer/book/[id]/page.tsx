@@ -524,7 +524,7 @@ export default function BookAppointment() {
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <Avatar className="w-20 h-20 border-4 border-[#1656a4]/20">
-                      <AvatarFallback className="bg-[#1656a4] text-white text-lg">
+                      <AvatarFallback className="bg-[#1656a4] text-white text-lg font-semibold">
                         {doctor.user_name
                           .split(" ")
                           .map((n) => n[0])
@@ -532,17 +532,17 @@ export default function BookAppointment() {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <h3 className="text-2xl font-bold text-gray-900">
+                      <h3 className="text-2xl font-bold text-gray-900 mb-1">
                         {doctor.user_name}
                       </h3>
-                      <p className="text-[#1656a4] font-semibold text-lg">
+                      <p className="text-[#1656a4] font-semibold text-lg mb-1">
                         {doctor.specialty}
                       </p>
                       <p className="text-gray-600 mb-3">
-                        {doctor.experience} experience
+                        {doctor.experience} years experience
                       </p>
 
-                      <div className="flex items-center gap-4 mb-4">
+                      <div className="flex items-center gap-4 mb-6">
                         <div className="flex items-center gap-1">
                           <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                           <span className="font-semibold">4.8</span>
@@ -551,25 +551,42 @@ export default function BookAppointment() {
                           </span>
                         </div>
                       </div>
-
-                      <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-green-800 font-medium">
-                            Consultation Fee
-                          </span>
-                          <span className="text-2xl font-bold text-green-600">
-                            Rs {doctor.consultation_fee}
-                          </span>
-                        </div>
-                        <p className="text-green-600 text-sm mt-1">
-                          Payment required to confirm booking
-                        </p>
-                      </div>
                     </div>
+                  </div>
+
+                  {/* Full-width info panels below header row (aligns to left edge like mock) */}
+                  <div className="mt-6 p-5 bg-blue-50 rounded-lg">
+                    <h4 className="font-semibold text-[#1656a4] mb-2">
+                      Qualifications
+                    </h4>
+                    <p className="text-sm text-gray-700 mb-3">
+                      {doctor.qualification}
+                    </p>
+
+                    <h4 className="font-semibold text-[#1656a4] mb-2">
+                      About Doctor
+                    </h4>
+                    <p className="text-sm text-gray-700">
+                      {doctor.bio ||
+                        "Specialized in pediatric care with extensive experience..."}
+                    </p>
+                  </div>
+
+                  <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-green-800 font-medium text-base">
+                        Consultation Fee
+                      </span>
+                      <span className="text-2xl font-bold text-green-600">
+                        Rs {Number(doctor.consultation_fee).toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="text-green-600 text-sm">
+                      Payment required to confirm booking
+                    </p>
                   </div>
                 </CardContent>
               </Card>
-
               {/* Date & Time Selection */}
               <Card className="border-2 border-[#1656a4]/20 shadow-xl">
                 <CardHeader className="bg-gradient-to-r from-[#1656a4] to-[#1656a4]/80 text-white rounded-t-lg">

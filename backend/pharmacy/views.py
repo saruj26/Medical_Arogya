@@ -83,7 +83,8 @@ class MedicineListCreateView(APIView):
         return Response({'success': True, 'medicines': serializer.data})
 
     def post(self, request):
-        if getattr(request.user, 'role', None) != 'admin' and not getattr(request.user, 'is_staff', False):
+        # allow admin, staff, or pharmacist to create medicines
+        if getattr(request.user, 'role', None) not in ('admin', 'pharmacist') and not getattr(request.user, 'is_staff', False):
             return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = MedicineSerializer(data=request.data, context={'request': request})
@@ -112,7 +113,8 @@ class MedicineDetailView(APIView):
         return Response({'success': True, 'medicine': MedicineSerializer(obj, context={'request': request}).data})
 
     def put(self, request, pk):
-        if getattr(request.user, 'role', None) != 'admin' and not getattr(request.user, 'is_staff', False):
+        # allow admin, staff, or pharmacist to update medicines
+        if getattr(request.user, 'role', None) not in ('admin', 'pharmacist') and not getattr(request.user, 'is_staff', False):
             return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
         obj = self.get_object(pk)
@@ -127,7 +129,8 @@ class MedicineDetailView(APIView):
         return Response({'success': False, 'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        if getattr(request.user, 'role', None) != 'admin' and not getattr(request.user, 'is_staff', False):
+        # allow admin, staff, or pharmacist to delete medicines
+        if getattr(request.user, 'role', None) not in ('admin', 'pharmacist') and not getattr(request.user, 'is_staff', False):
             return Response({'success': False, 'message': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
 
         obj = self.get_object(pk)

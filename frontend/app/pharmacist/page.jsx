@@ -5,7 +5,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Calendar, Box, ClipboardList, Package, Loader2, Pill, ShoppingCart, Users, AlertTriangle, TrendingUp, Sparkles, Zap } from "lucide-react";
+import {
+  Calendar,
+  Box,
+  ClipboardList,
+  Package,
+  Loader2,
+  Pill,
+  ShoppingCart,
+  Users,
+  AlertTriangle,
+  TrendingUp,
+  Sparkles,
+  Zap,
+} from "lucide-react";
 import api from "@/lib/api";
 
 export default function PharmacistDashboard() {
@@ -89,7 +102,9 @@ export default function PharmacistDashboard() {
           <div className="w-16 h-16 bg-gradient-to-br from-[#1656a4] to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
             <Loader2 className="w-8 h-8 text-white animate-spin" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Loading Pharmacy Dashboard</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Loading Pharmacy Dashboard
+          </h3>
           <p className="text-gray-600">Preparing your pharmacy insights...</p>
         </div>
       </div>
@@ -108,7 +123,9 @@ export default function PharmacistDashboard() {
             <h1 className="text-3xl font-bold bg-gradient-to-r from-[#1656a4] to-cyan-600 bg-clip-text text-transparent">
               Pharmacy Dashboard
             </h1>
-            <p className="text-gray-600 mt-1">Manage medicines, prescriptions, and sales</p>
+            <p className="text-gray-600 mt-1">
+              Manage medicines, prescriptions, and sales
+            </p>
           </div>
         </div>
 
@@ -121,8 +138,16 @@ export default function PharmacistDashboard() {
                   <Sparkles className="w-3 h-3 mr-1" />
                   Professional Portal
                 </Badge>
-                <Badge variant="secondary" className="bg-white/10 text-white border-0">
-                  {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                <Badge
+                  variant="secondary"
+                  className="bg-white/10 text-white border-0"
+                >
+                  {new Date().toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
                 </Badge>
               </div>
               <h2 className="text-2xl font-bold mb-2">
@@ -135,7 +160,9 @@ export default function PharmacistDashboard() {
             <div className="mt-4 lg:mt-0 lg:text-right">
               <div className="flex items-center gap-2 justify-end mb-2">
                 <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
-                <span className="text-green-200 text-sm font-medium">Online & Active</span>
+                <span className="text-green-200 text-sm font-medium">
+                  Online & Active
+                </span>
               </div>
               <p className="text-blue-100 font-medium">{userEmail}</p>
             </div>
@@ -150,9 +177,14 @@ export default function PharmacistDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900">{productsCount}</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {productsCount}
+                </p>
                 <p className="text-sm text-gray-600 mt-1">Total Products</p>
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800 mt-2">
+                <Badge
+                  variant="secondary"
+                  className="bg-blue-100 text-blue-800 mt-2"
+                >
                   +12% this month
                 </Badge>
               </div>
@@ -168,9 +200,14 @@ export default function PharmacistDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900">{categoriesCount}</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {categoriesCount}
+                </p>
                 <p className="text-sm text-gray-600 mt-1">Categories</p>
-                <Badge variant="secondary" className="bg-green-100 text-green-800 mt-2">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800 mt-2"
+                >
                   Organized
                 </Badge>
               </div>
@@ -186,9 +223,14 @@ export default function PharmacistDashboard() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-3xl font-bold text-gray-900">{prescriptionsCount}</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {prescriptionsCount}
+                </p>
                 <p className="text-sm text-gray-600 mt-1">Prescriptions</p>
-                <Badge variant="secondary" className="bg-purple-100 text-purple-800 mt-2">
+                <Badge
+                  variant="secondary"
+                  className="bg-purple-100 text-purple-800 mt-2"
+                >
                   Ready to process
                 </Badge>
               </div>
@@ -207,7 +249,14 @@ export default function PharmacistDashboard() {
                 <p className="text-3xl font-bold text-gray-900">{totalStock}</p>
                 <p className="text-sm text-gray-600 mt-1">Total Stock</p>
                 <div className="flex items-center gap-2 mt-2">
-                  <Badge variant="secondary" className={`${lowStock > 0 ? 'bg-amber-100 text-amber-800' : 'bg-green-100 text-green-800'}`}>
+                  <Badge
+                    variant="secondary"
+                    className={`${
+                      lowStock > 0
+                        ? "bg-amber-100 text-amber-800"
+                        : "bg-green-100 text-green-800"
+                    }`}
+                  >
                     <AlertTriangle className="w-3 h-3 mr-1" />
                     {lowStock} low stock
                   </Badge>
@@ -240,9 +289,11 @@ export default function PharmacistDashboard() {
                 <ShoppingCart className="w-5 h-5 mr-3" />
                 Manage Medicine Inventory
               </Button>
-              
+
               <Button
-                onClick={() => (window.location.href = "/pharmacist/prescriptions")}
+                onClick={() =>
+                  (window.location.href = "/pharmacist/prescriptions")
+                }
                 variant="outline"
                 className="w-full h-14 border-2 border-[#1656a4] text-[#1656a4] hover:bg-[#1656a4] hover:text-white font-semibold rounded-xl transition-all duration-300"
               >
@@ -288,7 +339,9 @@ export default function PharmacistDashboard() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Today's Sales</p>
-                    <p className="text-sm text-gray-600">{todaySales} transactions</p>
+                    <p className="text-sm text-gray-600">
+                      {todaySales} transactions
+                    </p>
                   </div>
                 </div>
                 <Badge className="bg-green-100 text-green-800">Active</Badge>
@@ -302,7 +355,9 @@ export default function PharmacistDashboard() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Prescriptions</p>
-                    <p className="text-sm text-gray-600">{prescriptionsCount} to process</p>
+                    <p className="text-sm text-gray-600">
+                      {prescriptionsCount} to process
+                    </p>
                   </div>
                 </div>
                 <Badge className="bg-blue-100 text-blue-800">
@@ -318,7 +373,9 @@ export default function PharmacistDashboard() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">Stock Alert</p>
-                    <p className="text-sm text-gray-600">{lowStock} items low</p>
+                    <p className="text-sm text-gray-600">
+                      {lowStock} items low
+                    </p>
                   </div>
                 </div>
                 <Badge className="bg-amber-100 text-amber-800">
@@ -329,8 +386,13 @@ export default function PharmacistDashboard() {
               {/* Performance Metrics */}
               <div className="p-4 bg-gradient-to-r from-gray-50 to-slate-50 rounded-xl border border-gray-200">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">System Performance</span>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">
+                  <span className="text-sm font-medium text-gray-700">
+                    System Performance
+                  </span>
+                  <Badge
+                    variant="secondary"
+                    className="bg-green-100 text-green-800"
+                  >
                     Optimal
                   </Badge>
                 </div>
@@ -348,7 +410,8 @@ export default function PharmacistDashboard() {
         <div className="inline-flex items-center gap-3 px-4 py-3 bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200 shadow-sm">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
           <span className="text-sm text-gray-600 font-medium">
-            Pharmacy management system running smoothly • All systems operational
+            Pharmacy management system running smoothly • All systems
+            operational
           </span>
         </div>
       </div>
