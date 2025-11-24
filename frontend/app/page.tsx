@@ -435,7 +435,7 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <Link href="/auth?mode=register">
+              <Link href="/auth?mode=login">
                 <Button
                   size="lg"
                   className="bg-white text-gray-900 hover:bg-white/95 px-12 py-6 text-lg font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 transform hover:scale-105 border-0 rounded-2xl"

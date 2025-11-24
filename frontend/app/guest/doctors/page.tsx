@@ -34,6 +34,7 @@ import api from "@/lib/api";
 import Header from "@/components/layout/header";
 import Footer from "@/components/layout/footer";
 import MonthCalendar from "@/components/booking/month-calendar";
+import { AuthModal } from "@/components/auth/auth-modal";
 
 interface Doctor {
   id: number;
@@ -52,7 +53,28 @@ interface Doctor {
   review_count?: number;
 }
 
+function useAuthModal() {
+  const [authModal, setAuthModal] = useState<{
+    isOpen: boolean;
+    mode: "login" | "register";
+  }>({
+    isOpen: false,
+    mode: "login",
+  });
+
+  const openAuthModal = (mode: "login" | "register") => {
+    setAuthModal({ isOpen: true, mode });
+  };
+
+  const closeAuthModal = () => {
+    setAuthModal({ isOpen: false, mode: "login" });
+  };
+
+  return { authModal, openAuthModal, closeAuthModal };
+}
+
 export default function BrowseDoctors() {
+  const { authModal, openAuthModal, closeAuthModal } = useAuthModal();
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("All Specialties");
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -144,9 +166,17 @@ export default function BrowseDoctors() {
     );
   };
 
+  const isAvailableOnDate = (doctor: Doctor, dateISO?: string) => {
+    const iso = dateISO || new Date().toISOString();
+    const weekday = weekdayForISO(iso);
+    return (doctor.available_days || []).some(
+      (day) => normalizeDay(day) === weekday
+    );
+  };
 
+  const isAvailableToday = (doctor: Doctor) => isAvailableOnDate(doctor);
 
-  if ( error) {
+  if (error) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-cyan-50 flex items-center justify-center">
         <Card className="max-w-lg w-full border-0 shadow-2xl text-center py-12 bg-white/90 backdrop-blur-sm rounded-3xl">
@@ -403,8 +433,11 @@ export default function BrowseDoctors() {
                                   ({doctor.review_count ?? 0} reviews)
                                 </span>
                               </div>
-                              <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-sm">
-                                Available Today
+                              <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">
+                                {doctor.is_profile_complete ||
+                                isAvailableToday(doctor)
+                                  ? "Available Today"
+                                  : "Not Available"}
                               </Badge>
                             </div>
 
@@ -437,19 +470,17 @@ export default function BrowseDoctors() {
                                 <p className="text-xs text-gray-500 uppercase font-semibold">
                                   Consultation Fee
                                 </p>
-                                <p className="text-2xl font-bold text-green-600">
+                                <p className="text-sm font-bold text-green-600">
                                   Rs {doctor.consultation_fee}
                                 </p>
                               </div>
-                              <Link
-                                href="/auth?mode=register"
-                                className="flex-1 ml-4"
+                              <Button
+                                onClick={() => openAuthModal("login")}
+                                className="w-300 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 h-12 font-bold text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 rounded-xl"
                               >
-                                <Button className="w-full bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 h-12 font-bold text-white shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105 rounded-xl">
-                                  Book Appointment
-                                  <ArrowRight className="w-4 h-4 ml-2" />
-                                </Button>
-                              </Link>
+                                Book Appointment
+                                <ArrowRight className="w-4 h-4 ml-2" />
+                              </Button>
                             </div>
                           </div>
                         </CardContent>
@@ -564,15 +595,13 @@ export default function BrowseDoctors() {
 
                             {/* Action Section */}
                             <div className="bg-gray-50/80 p-4 border-t">
-                              <Link
-                                href="/auth?mode=register"
-                                className="block"
+                              <Button
+                                onClick={() => openAuthModal("login")}
+                                className="w-full bg-blue-600 hover:bg-blue-700 h-12 font-semibold shadow-lg transition-all duration-300 rounded-xl"
                               >
-                                <Button className="w-full bg-blue-600 hover:bg-blue-700 h-12 font-semibold shadow-lg transition-all duration-300 rounded-xl">
-                                  Book This Slot
-                                  <Calendar className="w-4 h-4 ml-2" />
-                                </Button>
-                              </Link>
+                                Book This Slot
+                                <Calendar className="w-4 h-4 ml-2" />
+                              </Button>
                             </div>
                           </CardContent>
                         </Card>
@@ -598,20 +627,20 @@ export default function BrowseDoctors() {
                 your health journey.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/auth?mode=register">
-                  <Button className="bg-white text-blue-600 hover:bg-white/95 px-8 py-3 text-lg font-semibold rounded-xl shadow-2xl transition-all duration-300 transform hover:scale-105">
-                    Create Account
-                    <ArrowRight className="w-5 h-5 ml-2" />
-                  </Button>
-                </Link>
-                <Link href="/auth">
-                  <Button
-                    variant="outline"
-                    className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105"
-                  >
-                    Sign In
-                  </Button>
-                </Link>
+                <Button
+                  onClick={() => openAuthModal("register")}
+                  className="bg-white text-blue-600 hover:bg-white/95 px-8 py-3 text-lg font-semibold rounded-xl shadow-2xl transition-all duration-300 transform hover:scale-105"
+                >
+                  Create Account
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => openAuthModal("login")}
+                  className="border-2 border-white text-white hover:bg-white hover:text-blue-600 px-8 py-3 text-lg font-semibold rounded-xl transition-all duration-300 transform hover:scale-105"
+                >
+                  Sign In
+                </Button>
               </div>
             </div>
           </CardContent>

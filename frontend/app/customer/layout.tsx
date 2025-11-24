@@ -20,6 +20,8 @@ import {
   Sparkles,
   Zap,
   Bell,
+  Map,
+  MapIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Suspense } from "react";
@@ -178,13 +180,6 @@ export default function CustomerLayout({
 
           {/* Enhanced Header right section */}
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="hidden sm:flex items-center gap-2 bg-blue-50 px-3 py-1 rounded-full border border-blue-200">
-              <Shield className="w-3 h-3 text-blue-600" />
-              <span className="text-sm text-blue-700 font-medium">
-                Premium Care
-              </span>
-            </div>
-
             <span className="text-sm text-gray-600 font-medium hidden sm:block">
               Welcome,{" "}
               <span className="text-[#1656a4] font-semibold">
@@ -239,7 +234,6 @@ export default function CustomerLayout({
                   <div className="text-base font-bold text-gray-900 truncate">
                     {userName ?? "Patient"}
                   </div>
-                  <Sparkles className="w-4 h-4 text-amber-500" />
                 </div>
                 <div className="text-sm text-gray-600 truncate mb-2">
                   {userEmail ?? "patient@example.com"}
@@ -426,7 +420,7 @@ export default function CustomerLayout({
                       <span>✉️</span> info@arogya.com
                     </li>
                     <li className="flex items-center gap-2">
-                      <span>📍</span> 123 Nelliyady, Karaveddy
+                      <span><MapIcon/></span> 123 Nelliyady, Karaveddy
                     </li>
                     <li className="flex items-center gap-2">
                       <span>🕒</span> 24/7 Emergency Support

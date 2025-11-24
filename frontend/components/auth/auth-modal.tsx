@@ -32,7 +32,11 @@ export function AuthModal({
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
 
-  const switchMode = (newMode: AuthMode, userEmail?: string, otpCode?: string) => {
+  const switchMode = (
+    newMode: AuthMode,
+    userEmail?: string,
+    otpCode?: string
+  ) => {
     setMode(newMode);
     if (userEmail) setEmail(userEmail);
     if (otpCode) setOtp(otpCode);
@@ -96,10 +100,7 @@ export function AuthModal({
       case "otp":
         return <OTPVerificationForm {...commonProps} />;
       case "reset":
-        return <ResetPasswordForm 
-        {...commonProps} 
-        otp={otp}
-        />;
+        return <ResetPasswordForm {...commonProps} otp={otp} />;
       default:
         return <LoginForm {...commonProps} />;
     }

@@ -46,6 +46,8 @@ interface Doctor {
   is_profile_complete: boolean;
   avg_rating?: number;
   review_count?: number;
+  profile_image?: string;
+  name?: string;
 }
 
 export default function BrowseDoctors() {
@@ -141,6 +143,17 @@ export default function BrowseDoctors() {
     new Date(iso)
       .toLocaleDateString("en-US", { weekday: "long" })
       .toLowerCase();
+
+  // Check if a doctor is available on a given ISO date (defaults to today)
+  const isAvailableOnDate = (doctor: Doctor, dateISO?: string) => {
+    const iso = dateISO || new Date().toISOString();
+    const weekday = weekdayForISO(iso);
+    return (doctor.available_days || []).some(
+      (day) => normalizeDay(day) === weekday
+    );
+  };
+
+  const isAvailableToday = (doctor: Doctor) => isAvailableOnDate(doctor);
 
   const getDoctorsByDate = (dateISO: string) => {
     if (!dateISO) return doctors;
@@ -352,12 +365,19 @@ export default function BrowseDoctors() {
                         <div className="p-6 pb-4">
                           <div className="flex items-start gap-4">
                             <Avatar className="w-16 h-16 border-4 border-blue-100 group-hover:border-blue-200 transition-colors shadow-lg">
-                              <AvatarFallback className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white font-semibold text-lg">
-                                {doctor.user_name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")}
-                              </AvatarFallback>
+                              {doctor.profile_image ? (
+                                <AvatarImage
+                                  src={doctor.profile_image}
+                                  alt={doctor.user_name || doctor.name}
+                                />
+                              ) : (
+                                <AvatarFallback className="bg-gradient-to-br from-blue-600 to-cyan-600 text-white font-semibold text-lg">
+                                  {doctor.user_name
+                                    .split(" ")
+                                    .map((n) => n[0])
+                                    .join("")}
+                                </AvatarFallback>
+                              )}
                             </Avatar>
 
                             <div className="flex-1 min-w-0">
@@ -393,7 +413,8 @@ export default function BrowseDoctors() {
                               </span>
                             </Link>
                             <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">
-                              {doctor.is_profile_complete
+                              {doctor.is_profile_complete &&
+                              isAvailableToday(doctor)
                                 ? "Available Today"
                                 : "Not Available"}
                             </Badge>

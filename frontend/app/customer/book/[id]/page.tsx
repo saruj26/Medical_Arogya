@@ -98,7 +98,10 @@ export default function BookAppointment() {
     const token = localStorage.getItem("token");
 
     if (role !== "customer" || !token) {
-      router.push("/");
+      // Redirect to the auth page and include a `next` parameter so
+      // the user can be returned here after successful login/registration.
+      const nextPath = `/customer/book/${params?.id}`;
+      router.push(`/auth?mode=login&next=${encodeURIComponent(nextPath)}`);
       return;
     }
 

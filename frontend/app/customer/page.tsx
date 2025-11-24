@@ -35,9 +35,29 @@ import {
   CheckCircle,
   Users,
   Activity,
+ 
 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import api from "@/lib/api";
+
+interface Doctor {
+  id: number;
+  doctor_id: string;
+  user_name: string;
+  specialty: string;
+  experience: string;
+  qualification: string;
+  bio: string;
+  consultation_fee: string;
+  available_days: string[];
+  available_time_slots: string[];
+  is_profile_complete: boolean;
+  avg_rating?: number;
+  review_count?: number;
+  profile_image?: string;
+  name?: string;
+}
 
 export default function CustomerDashboard() {
   const router = useRouter();
@@ -131,6 +151,24 @@ export default function CustomerDashboard() {
       setDoctorsLoading(false);
     }
   };
+
+  const normalizeDay = (day: string) => day.trim().toLowerCase();
+
+  const weekdayForISO = (iso: string) =>
+    new Date(iso)
+      .toLocaleDateString("en-US", { weekday: "long" })
+      .toLowerCase();
+
+  // Check if a doctor is available on a given ISO date (defaults to today)
+  const isAvailableOnDate = (doctor: Doctor, dateISO?: string) => {
+    const iso = dateISO || new Date().toISOString();
+    const weekday = weekdayForISO(iso);
+    return (doctor.available_days || []).some(
+      (day) => normalizeDay(day) === weekday
+    );
+  };
+
+  const isAvailableToday = (doctor: Doctor) => isAvailableOnDate(doctor);
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -364,7 +402,7 @@ export default function CustomerDashboard() {
                     </Button>
                   </Link>
 
-                  <Link href="/customer/medical-records">
+                  <Link href="/customer/prescription">
                     <Button
                       variant="outline"
                       className="w-full justify-start gap-3 p-4 h-auto border-purple-200 hover:bg-purple-50 hover:border-purple-300 transition-all duration-300 group"
@@ -530,21 +568,15 @@ export default function CustomerDashboard() {
                 <Card
                   key={doctor.id}
                   style={{ flex: "0 0 calc(33.333% - 1rem)" }}
-                  className={`bg-white/95 backdrop-blur-sm border-0 shadow-xl transition-transform duration-400 ease-in-out transform-gpu flex-shrink-0 group hover:scale-105 hover:rotate-0 ${
-                    index % 3 === 0
-                      ? "rotate-3"
-                      : index % 3 === 1
-                      ? "-rotate-2"
-                      : "rotate-1"
-                  }`}
+                  className={`bg-white/95 backdrop-blur-sm border-0 shadow-xl transition-transform duration-400 ease-in-out transform-gpu flex-shrink-0 group hover:scale-105 hover:rotate-0 `}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="relative">
                         <Avatar className="w-20 h-20 rounded-2xl shadow-lg ring-1 ring-white/20">
-                          {doctor.image ? (
+                          {doctor.profile_image ? (
                             <AvatarImage
-                              src={doctor.image}
+                              src={doctor.profile_image}
                               alt={doctor.user_name || doctor.name}
                             />
                           ) : (
@@ -593,11 +625,16 @@ export default function CustomerDashboard() {
                     <div className="space-y-2 mb-4">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <MapPin className="w-3 h-3" />
-                        <span>Colombo, Sri Lanka</span>
+                        <span>Jaffna, Sri Lanka</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Clock className="w-3 h-3" />
-                        <span>Available Today</span>
+                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100 text-xs">
+                          {doctor.is_profile_complete ||
+                          isAvailableToday(doctor)
+                            ? "Available Today"
+                            : "Not Available"}
+                        </Badge>
                       </div>
                     </div>
 
