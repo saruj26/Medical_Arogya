@@ -150,7 +150,7 @@ export default function AddDoctorPage() {
                   onChange={(e) =>
                     setDoctorForm({ ...doctorForm, name: e.target.value })
                   }
-                  placeholder="Dr. John Smith"
+                  placeholder="John Smith"
                   className="h-12 border-2 border-gray-200 focus:border-[#1656a4] focus:ring-2 focus:ring-blue-200 rounded-xl transition-all"
                 />
                 <p className="text-xs text-gray-500">Enter the doctor's full professional name</p>

@@ -551,39 +551,38 @@ export default function BookAppointment() {
                           </span>
                         </div>
                       </div>
+
+                      <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                        <h4 className="font-semibold text-[#1656a4] mb-2">
+                          Qualifications
+                        </h4>
+                        <p className="text-sm text-gray-700 mb-3">
+                          {doctor.qualification}
+                        </p>
+
+                        <h4 className="font-semibold text-[#1656a4] mb-2">
+                          About Doctor
+                        </h4>
+                        <p className="text-sm text-gray-700">
+                          {doctor.bio ||
+                            "Specialized in pediatric care with extensive experience..."}
+                        </p>
+                      </div>
+
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-green-800 font-medium text-base">
+                            Consultation Fee
+                          </span>
+                          <span className="text-2xl font-bold text-green-600">
+                            Rs {doctor.consultation_fee}
+                          </span>
+                        </div>
+                        <p className="text-green-600 text-sm">
+                          Payment required to confirm booking
+                        </p>
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Full-width info panels below header row (aligns to left edge like mock) */}
-                  <div className="mt-6 p-5 bg-blue-50 rounded-lg">
-                    <h4 className="font-semibold text-[#1656a4] mb-2">
-                      Qualifications
-                    </h4>
-                    <p className="text-sm text-gray-700 mb-3">
-                      {doctor.qualification}
-                    </p>
-
-                    <h4 className="font-semibold text-[#1656a4] mb-2">
-                      About Doctor
-                    </h4>
-                    <p className="text-sm text-gray-700">
-                      {doctor.bio ||
-                        "Specialized in pediatric care with extensive experience..."}
-                    </p>
-                  </div>
-
-                  <div className="mt-4 bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-green-800 font-medium text-base">
-                        Consultation Fee
-                      </span>
-                      <span className="text-2xl font-bold text-green-600">
-                        Rs {Number(doctor.consultation_fee).toFixed(2)}
-                      </span>
-                    </div>
-                    <p className="text-green-600 text-sm">
-                      Payment required to confirm booking
-                    </p>
                   </div>
                 </CardContent>
               </Card>

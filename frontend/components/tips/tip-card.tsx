@@ -58,7 +58,7 @@ export function TipCard({ tip }: { tip: Tip }) {
             <svg className="w-3 h-3 mr-1 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            {tip.doctor_name || "Medical Professional"}
+            Dr. {tip.doctor_name || "Medical Professional"}
           </span>
           <span className="text-gray-500 font-medium">
             {tip.created_at

@@ -91,17 +91,22 @@ export default function DoctorDashboardPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          setAppointments(data.appointments || []);
-          // Calculate stats
-          const todayApps = data.appointments || [];
-          const completed = todayApps.filter(
+          // Double filter on client side to ensure only today's confirmed appointments
+          const allAppointments = data.appointments || [];
+          const todayConfirmedApps = allAppointments.filter(
+            (apt: Appointment) =>
+              apt.appointment_date === today && apt.status === "confirmed"
+          );
+
+          const completed = todayConfirmedApps.filter(
             (apt: Appointment) => apt.status === "completed"
           ).length;
 
+          setAppointments(todayConfirmedApps);
           setStats({
-            todayAppointments: todayApps.length,
+            todayAppointments: todayConfirmedApps.length,
             completedToday: completed,
-            totalPrescriptions: 0, // You might want to fetch this separately
+            totalPrescriptions: 0,
           });
         }
       }
@@ -156,14 +161,16 @@ export default function DoctorDashboardPage() {
               Welcome back, Doctor
             </div>
             <h1 className="text-3xl font-bold mb-2">
-              {doctorProfile?.user_name || "Doctor"}
+              Dr. {doctorProfile?.user_name || "Doctor"}
             </h1>
             <p className="text-blue-100 text-lg">
               Ready for today's consultations
             </p>
           </div>
           <div className="text-right">
-            <p className="text-2xl font-bold mb-1">{getNextAppointmentTime()}</p>
+            <p className="text-2xl font-bold mb-1">
+              {getNextAppointmentTime()}
+            </p>
             <p className="text-blue-100 text-sm">Next Appointment</p>
           </div>
         </div>
@@ -178,10 +185,11 @@ export default function DoctorDashboardPage() {
           <div className="flex-1">
             <p className="font-semibold text-lg">Complete Your Profile</p>
             <p className="text-amber-100 text-sm">
-              Finish setting up your profile to start accepting appointments and build patient trust.
+              Finish setting up your profile to start accepting appointments and
+              build patient trust.
             </p>
           </div>
-          <Button 
+          <Button
             className="bg-white text-amber-600 hover:bg-white/90 font-semibold rounded-xl"
             onClick={() => router.push("/doctor/profile")}
           >
@@ -200,8 +208,12 @@ export default function DoctorDashboardPage() {
                 <Calendar className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-gray-900">{stats.todayAppointments}</p>
-                <p className="text-sm text-gray-600 font-medium">Today's Appointments</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.todayAppointments}
+                </p>
+                <p className="text-sm text-gray-600 font-medium">
+                  Today's Appointments
+                </p>
               </div>
             </div>
             <div className="mt-3 flex items-center gap-1 text-xs text-blue-600">
@@ -218,8 +230,12 @@ export default function DoctorDashboardPage() {
                 <CheckCircle2 className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-gray-900">{stats.completedToday}</p>
-                <p className="text-sm text-gray-600 font-medium">Completed Today</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.completedToday}
+                </p>
+                <p className="text-sm text-gray-600 font-medium">
+                  Completed Today
+                </p>
               </div>
             </div>
             <div className="mt-3 flex items-center gap-1 text-xs text-green-600">
@@ -236,8 +252,12 @@ export default function DoctorDashboardPage() {
                 <FileText className="w-7 h-7 text-white" />
               </div>
               <div>
-                <p className="text-3xl font-bold text-gray-900">{stats.totalPrescriptions}</p>
-                <p className="text-sm text-gray-600 font-medium">Prescriptions</p>
+                <p className="text-3xl font-bold text-gray-900">
+                  {stats.totalPrescriptions}
+                </p>
+                <p className="text-sm text-gray-600 font-medium">
+                  Prescriptions
+                </p>
               </div>
             </div>
             <div className="mt-3 flex items-center gap-1 text-xs text-purple-600">
@@ -257,7 +277,9 @@ export default function DoctorDashboardPage() {
                 <p className="text-xl font-bold text-gray-900 leading-tight">
                   {getNextAppointmentTime()}
                 </p>
-                <p className="text-sm text-gray-600 font-medium">Next Appointment</p>
+                <p className="text-sm text-gray-600 font-medium">
+                  Next Appointment
+                </p>
               </div>
             </div>
             <div className="mt-3 flex items-center gap-1 text-xs text-orange-600">
@@ -276,7 +298,10 @@ export default function DoctorDashboardPage() {
               <Calendar className="w-5 h-5 text-white" />
             </div>
             Today's Appointments
-            <Badge variant="secondary" className="ml-2 bg-blue-100 text-blue-800">
+            <Badge
+              variant="secondary"
+              className="ml-2 bg-blue-100 text-blue-800"
+            >
               {appointments.length} scheduled
             </Badge>
           </CardTitle>
@@ -288,8 +313,12 @@ export default function DoctorDashboardPage() {
                 <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Calendar className="w-8 h-8 text-gray-400" />
                 </div>
-                <p className="text-gray-600 text-lg font-medium">No appointments scheduled</p>
-                <p className="text-gray-500 text-sm mt-1">All clear for today!</p>
+                <p className="text-gray-600 text-lg font-medium">
+                  No appointments scheduled
+                </p>
+                <p className="text-gray-500 text-sm mt-1">
+                  All clear for today!
+                </p>
               </div>
             ) : (
               appointments.map((appointment) => (

@@ -382,7 +382,7 @@ export default function BrowseDoctors() {
 
                             <div className="flex-1 min-w-0">
                               <h3 className="text-xl font-bold text-gray-900 truncate">
-                                {doctor.user_name}
+                                Dr.{doctor.user_name}
                               </h3>
                               <p className="text-blue-700 font-semibold text-sm">
                                 {doctor.specialty}
@@ -537,7 +537,7 @@ export default function BrowseDoctors() {
 
                             <div className="flex-1 min-w-0">
                               <h3 className="text-xl font-bold text-gray-900 truncate">
-                                {doctor.user_name}
+                                Dr. {doctor.user_name}
                               </h3>
                               <p className="text-blue-700 font-semibold text-sm">
                                 {doctor.specialty}

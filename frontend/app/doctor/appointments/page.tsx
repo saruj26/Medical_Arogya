@@ -72,8 +72,10 @@ export default function DoctorAppointmentsPage() {
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          setAllAppointments(data.appointments || []);
-          setAppointments(data.appointments || []);
+          const items: Appointment[] = data.appointments || [];
+          const sorted = sortAppointments(items);
+          setAllAppointments(sorted);
+          setAppointments(sorted);
         }
       }
     } catch (error) {
@@ -82,6 +84,29 @@ export default function DoctorAppointmentsPage() {
       setLoading(false);
       setStatsLoading(false);
     }
+  };
+
+  const parseDateTime = (dateStr?: string, timeStr?: string) => {
+    if (!dateStr) return 0;
+    // Try ISO-like parse first, then fallback to a space-separated parse
+    const timePart =
+      timeStr && timeStr.trim() !== "" ? timeStr.trim() : "00:00";
+    const iso = `${dateStr}T${timePart}`;
+    let t = Date.parse(iso);
+    if (isNaN(t)) {
+      t = Date.parse(`${dateStr} ${timePart}`);
+    }
+    return isNaN(t) ? 0 : t;
+  };
+
+  const sortAppointments = (arr: Appointment[]) => {
+    return arr
+      .slice()
+      .sort(
+        (a, b) =>
+          parseDateTime(a.appointment_date, a.appointment_time) -
+          parseDateTime(b.appointment_date, b.appointment_time)
+      );
   };
 
   const filterAppointments = () => {

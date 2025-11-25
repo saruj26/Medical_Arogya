@@ -300,7 +300,7 @@ export default function DoctorsPage() {
                         </Avatar>
                         <div>
                           <p className="font-semibold text-gray-900">
-                            {doctor.user_name}
+                            Dr. {doctor.user_name}
                           </p>
                           <p className="text-xs text-gray-500">
                             ID: {doctor.doctor_id}
@@ -444,7 +444,7 @@ export default function DoctorsPage() {
                     </Avatar>
                     <div>
                       <h3 className="text-2xl font-bold">
-                        {selectedDoctor.user_name}
+                        Dr .{selectedDoctor.user_name}
                       </h3>
                       <p className="text-blue-100">
                         {selectedDoctor.specialty || "Medical Professional"}

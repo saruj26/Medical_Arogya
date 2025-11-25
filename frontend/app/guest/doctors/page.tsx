@@ -406,7 +406,7 @@ export default function BrowseDoctors() {
 
                               <div className="flex-1 min-w-0">
                                 <h3 className="text-xl font-bold truncate mb-1">
-                                  {doctor.user_name}
+                                  Dr. {doctor.user_name}
                                 </h3>
                                 <p className="text-blue-100 font-semibold text-sm mb-2">
                                   {doctor.specialty}
