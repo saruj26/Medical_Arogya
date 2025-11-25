@@ -3,7 +3,7 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import {
   Stethoscope,
   Settings,
@@ -32,14 +32,26 @@ export default function CustomerLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const pathname = usePathname();
+  const [tabQuery, setTabQuery] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Read 'tab' query param from the URL on the client to avoid useSearchParams prerender bailout
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const q = sp.get("tab");
+      if (q) setTabQuery(q);
+    } catch (e) {
+      // ignore
+    }
   }, []);
 
   // Prevent browser from restoring scroll position on refresh/navigation which
@@ -67,7 +79,7 @@ export default function CustomerLayout({
   }, []);
 
   const tab =
-    searchParams?.get("tab") ||
+    (tabQuery ? tabQuery : null) ||
     (pathname?.includes("/customer/settings")
       ? "settings"
       : pathname?.includes("/customer/prescription")
@@ -420,7 +432,10 @@ export default function CustomerLayout({
                       <span>✉️</span> info@arogya.com
                     </li>
                     <li className="flex items-center gap-2">
-                      <span><MapIcon/></span> 123 Nelliyady, Karaveddy
+                      <span>
+                        <MapIcon />
+                      </span>{" "}
+                      123 Nelliyady, Karaveddy
                     </li>
                     <li className="flex items-center gap-2">
                       <span>🕒</span> 24/7 Emergency Support
