@@ -94,116 +94,230 @@ Important files and folders:
   - `backend/core/` — authentication, profile and change-password
 
 - Frontend
-  - `frontend/app/customer/` — customer-facing pages (dashboard, profile, browse)
-  - `frontend/app/customer/appointment/` — appointment list and detail
-  - `frontend/app/customer/browse/` — doctors browse and filters
-  - `frontend/components/booking/` — calendar helpers (CalendarGrid)
-  - `frontend/lib/api.ts` — API URL helper
 
----
+  # Medical_Arogya
 
-## Quick Setup (Local)
+  ⚕️ Arogya — Medical Appointment Booking & Patient Portal
 
-Run these commands in PowerShell on Windows. For macOS/Linux adjust venv activation accordingly.
+  Medical_Arogya is a full-stack application that enables clinics and healthcare providers to manage doctor profiles, availability, and patient appointments. The project pairs a Django REST backend with a Next.js + Tailwind frontend and contains core features for patients, doctors, pharmacists and administrators.
 
-1. Backend
+  This README contains practical setup and troubleshooting notes for local development and deployment.
 
-```powershell
-cd backend
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
-python manage.py migrate
-python manage.py createsuperuser  # optional
-python manage.py runserver
-```
+  --
 
-2. Frontend
+  ## Table of Contents
 
-```powershell
-cd frontend
-npm install
-npm run dev
-# open http://localhost:3000
-```
+  - [Tech stack](#tech-stack)
+  - [Quick start (local)](#quick-start-local)
+  - [Frontend (pnpm / Next.js)](#frontend-pnpm--nextjs)
+  - [Backend (Django)](#backend-django)
+  - [Environment variables](#environment-variables)
+  - [API overview](#api-overview)
+  - [Common issues & troubleshooting](#common-issues--troubleshooting)
+  - [Testing & linting](#testing--linting)
+  - [Deployment (Vercel) notes](#deployment-vercel-notes)
+  - [Project structure & important files](#project-structure--important-files)
+  - [Contributing](#contributing)
+  - [License](#license)
 
-Notes
+  --
 
-- Backend default: `http://127.0.0.1:8000`. Configure `NEXT_PUBLIC_API_URL` in `frontend/.env.local` when necessary.
-- Use PostgreSQL in production and secure your Django secret key.
+  ## Tech stack
 
-## Environment & Config
+  - Frontend: Next.js (App Router), React, TypeScript, Tailwind CSS
+  - Backend: Django, Django REST Framework
+  - DB (dev): SQLite (production: PostgreSQL recommended)
+  - Auth: JWT (SimpleJWT) for API; Django admin for staff users
 
-Frontend `.env.local` example:
+  --
 
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
+  ## Quick start (local)
 
-Backend example (use environment secrets in production):
+  Prerequisites
 
-```
-DJANGO_SECRET_KEY=your-secret-key
-DEBUG=True
-DATABASE_URL=sqlite:///db.sqlite3
-```
+  - Python 3.10+ (3.11 recommended)
+  - Node.js 20+ and pnpm (v8/10 recommended). You can use `npx pnpm@10` if pnpm is not globally installed.
 
----
+  1. Backend (Django)
 
-## API Reference (overview)
+  ```powershell
+  cd backend
+  python -m venv .venv
+  .\.venv\Scripts\Activate.ps1
+  pip install -r requirements.txt
+  python manage.py migrate
+  # optional: create superuser for admin
+  python manage.py createsuperuser
+  python manage.py runserver 0.0.0.0:8000
+  ```
 
-Key endpoints (mounted under `/api/`):
+  2. Frontend (Next.js)
 
-- `POST /api/auth/login/` — login (JWT)
-- `POST /api/auth/change-password/` — change password
-- `GET /api/user/profile/` and `PUT /api/user/profile/` — profile
-- `GET /api/appointment/appointments/` — list appointments
-- `GET /api/appointment/appointments/<id>/` and `PUT` — appointment detail & update
-- `GET /api/appointment/prescriptions/` and download endpoint
+  We use pnpm to install dependencies and build the Next app.
 
-Use the `api()` helper in `frontend/lib/api.ts` to build requests.
+  ```powershell
+  cd frontend
+  pnpm install
+  pnpm dev
+  # open http://localhost:3000
+  ```
 
----
+  Notes
 
-## Developer Notes & Conventions
+  - The frontend reads the API base from `NEXT_PUBLIC_API_URL` (see Environment section). If not set, it defaults to `http://localhost:8000`.
+  - If native modules (e.g. `sharp`) require approval during installation, run `pnpm approve-builds` and approve when prompted.
 
-- Time handling: frontend converts AM/PM selections to `HH:MM:SS` string format for backend `TimeField`.
-- Always use `frontend/lib/api.ts` so the app respects `NEXT_PUBLIC_API_URL` in different environments.
-- Calendar: `frontend/components/booking/calendar.tsx` (CalendarGrid) highlights doctor-available dates — prefer it for booking flows.
+  --
 
----
+  ## Frontend (pnpm / Next.js)
 
-## Medical Assistant (chat)
+  - Install: `pnpm install` (or `npx pnpm@10 install`)
+  - Run dev: `pnpm dev`
+  - Build production: `pnpm build`
+  - Start production: `pnpm start` (if `start` script is configured by your deployment)
 
-The project includes a lightweight Medical Assistant for general guidance (non-diagnostic).
+  If you see errors about the lockfile on CI (e.g., Vercel) — regenerate `pnpm-lock.yaml` locally using the same pnpm version and commit it.
 
-- UI: `frontend/app/customer/chat/page.tsx`
-- Backend handlers (if present): `backend/chat/`
+  --
 
-Disclaimer: This assistant provides information only and should not be used for emergency or diagnostic decisions. Add clear in-app disclaimers and request explicit consent if storing transcripts.
+  ## Backend (Django)
 
----
+  - Run migrations: `python manage.py migrate`
+  - Create test data / fixtures: add fixtures or run scripts under `backend/` as needed
+  - Run tests: `python manage.py test`
 
-## Contributing
+  When deploying to production, use a proper WSGI/ASGI server (Gunicorn/uvicorn), configure static files, and switch the DB to PostgreSQL.
 
-Contributions are welcome. Suggested flow:
+  --
 
-1. Fork and create a branch (`feature/...` or `fix/...`).
-2. Run linters/tests and update migrations if required.
-3. Open a PR with a clear description and screenshots.
+  ## Environment variables
 
----
+  Frontend: create `frontend/.env.local` with:
 
-## License
+  ```
+  NEXT_PUBLIC_API_URL=http://localhost:8000
+  ```
 
-No license file is included by default. Add a `LICENSE` (MIT recommended) to open-source the project.
+  Backend: set secure production values (example `.env` keys):
 
----
+  ```
+  DJANGO_SECRET_KEY=your-secret-key
+  DEBUG=False
+  DATABASE_URL=postgres://user:pass@host:5432/dbname
+  EMAIL_HOST=smtp.example.com
+  EMAIL_PORT=587
+  EMAIL_HOST_USER=you@example.com
+  EMAIL_HOST_PASSWORD=supersecret
+  DEFAULT_FROM_EMAIL=you@example.com
+  ```
 
-If you want, I can add:
+  --
 
-- `LICENSE` (MIT) file
-- Example `.env.local` files in `frontend/` and `backend/`
-- Small README files inside `backend/` and `frontend/` with per-folder run commands
+  ## API overview
 
-Happy building! 🚀
+  Important endpoints (mounted under `/api/` via `backend/core/urls.py`):
+
+  - `POST /api/auth/register/` — register user
+  - `POST /api/auth/login/` — login (returns access token)
+  - `POST /api/auth/forgot-password/` — request OTP for password reset
+  - `POST /api/auth/verify-otp/` — verify OTP (doesn't consume OTP)
+  - `POST /api/auth/reset-password/` — reset password (consumes OTP)
+  - `POST /api/auth/change-password/` — change password (authenticated)
+  - `GET/PUT /api/user/profile/` — get or update profile
+  - `GET /api/appointment/appointments/` — list appointments
+  - `GET/PUT /api/appointment/appointments/<id>/` — appointment detail & update
+
+  Use `frontend/lib/api.ts` to construct the base URL for requests:
+
+  ```ts
+  import api from '@/lib/api'
+  fetch(api('/api/auth/change-password/'), ...)
+  ```
+
+  --
+
+  ## Common issues & troubleshooting
+
+  - Next prerender errors (hooks used in server components):
+
+    - Error: "useSearchParams() should be wrapped in a suspense boundary" — Solution: move calls to `useSearchParams`, `usePathname`, or other client-only hooks into `"use client"` components, or wrap the client component in a server wrapper that uses `Suspense`.
+
+  - pnpm & lockfile problems on CI (Vercel):
+
+    - If Vercel fails with a frozen lockfile error, regenerate `pnpm-lock.yaml` locally with the same pnpm version, commit it, and push. Alternatively, configure the Vercel build to allow non-frozen installs temporarily.
+
+  - Native build scripts (sharp) blocked during install:
+
+    - Run `pnpm approve-builds` when prompted and approve `sharp`.
+
+  - Missing types or module resolution in TypeScript:
+
+    - Ensure `node_modules` is installed (pnpm), and that dev dependencies with types (e.g., `@types/*`) are present if a library doesn't bundle types.
+
+  - Webpack/Next internal loader resolution errors (pnpm hoisting issues):
+    - Remove `node_modules` and `.next`, reinstall with pnpm, and ensure the exact `next` version used in CI matches local:
+
+  ```powershell
+  Remove-Item -Recurse -Force .next,node_modules -ErrorAction SilentlyContinue
+  pnpm install
+  pnpm build
+  ```
+
+  --
+
+  ## Testing & linting
+
+  - Backend tests: `python manage.py test`
+  - Frontend type check (if configured): `pnpm build` (Next will skip typecheck in some configs); or run `pnpm tsc --noEmit` if TypeScript config exists.
+  - Linting: run any configured linters (ESLint/Prettier) as configured in the repo.
+
+  --
+
+  ## Deployment (Vercel) notes
+
+  - Ensure the repo pushed contains `pnpm-lock.yaml` and `package.json` in the `frontend/` folder.
+  - Vercel uses the lockfile by default (frozen). If you regenerate the lockfile locally, commit and push it before deploying.
+  - Set environment variables in the Vercel project settings (e.g., `NEXT_PUBLIC_API_URL`, any secrets required by the app).
+  - If a native dependency requires approval (e.g., `sharp`), approve locally, commit the lockfile, and push.
+
+  --
+
+  ## Project structure & important files
+
+  - `backend/` — Django project, apps and API
+
+    - `backend/core/` — authentication, profile, password flows
+    - `backend/appointment/` — appointments and prescriptions
+
+  - `frontend/` — Next.js app (App Router)
+    - `frontend/app/` — pages grouped by route (customer, doctor, pharmacist, admin)
+    - `frontend/components/` — shared UI components and primitives
+    - `frontend/lib/api.ts` — helper to build API URL using `NEXT_PUBLIC_API_URL`
+
+  --
+
+  ## Contributing
+
+  Contributions welcome. Suggested flow:
+
+  1. Fork the repository and create a branch: `git checkout -b feature/my-feature`
+  2. Run backend & frontend locally, add tests where appropriate.
+  3. Open a PR with a clear description, screenshots and migration notes (if any).
+
+  Please follow the existing code style and naming conventions in the repo.
+
+  --
+
+  ## License
+
+  This repository doesn't include a license file by default. If you plan to open-source it, add a `LICENSE` file (MIT is a common choice).
+
+  --
+
+  If you'd like, I can also:
+
+  - add a `LICENSE` (MIT) file
+  - create per-folder READMEs for `backend/` and `frontend/` with more granular commands
+  - scan the repo for client-only hooks (`useSearchParams`, `usePathname`) and prepare PR-style patches to fix any remaining prerender issues
+
+  If you want any of those follow-ups, tell me which and I will implement them.
