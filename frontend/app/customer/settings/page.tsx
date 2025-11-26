@@ -1,22 +1,29 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  Stethoscope, 
-  ArrowLeft, 
-  User, 
-  Bell, 
-  Shield, 
-  Mail, 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import api from "@/lib/api";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Stethoscope,
+  ArrowLeft,
+  User,
+  Bell,
+  Shield,
+  Mail,
   Smartphone,
   Eye,
   EyeOff,
@@ -27,135 +34,176 @@ import {
   Heart,
   Lock,
   Users,
-  BarChart3
-} from "lucide-react"
+  BarChart3,
+} from "lucide-react";
 
 export default function CustomerSettings() {
-  const router = useRouter()
-  const [userEmail, setUserEmail] = useState("")
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState({ type: '', text: '' })
+  const router = useRouter();
+  const [userEmail, setUserEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState({ type: "", text: "" });
   const [notifications, setNotifications] = useState({
     email: true,
     sms: true,
     marketing: false,
     appointmentReminders: true,
-    healthTips: true
-  })
+    healthTips: true,
+  });
   const [privacy, setPrivacy] = useState({
     profileVisibility: true,
     dataSharing: false,
-    medicalHistory: true
-  })
+    medicalHistory: true,
+  });
   const [passwordForm, setPasswordForm] = useState({
     current_password: "",
     new_password: "",
     confirm_password: "",
-  })
+  });
   const [showPassword, setShowPassword] = useState({
     current: false,
     new: false,
-    confirm: false
-  })
+    confirm: false,
+  });
 
   useEffect(() => {
-    const role = localStorage.getItem("userRole")
-    const email = localStorage.getItem("userEmail")
+    const role = localStorage.getItem("userRole");
+    const email = localStorage.getItem("userEmail");
 
     if (role !== "customer") {
-      router.push("/")
-      return
+      router.push("/");
+      return;
     }
 
-    setUserEmail(email || "")
-  }, [router])
+    setUserEmail(email || "");
+  }, [router]);
 
   const handleNotificationChange = (key: keyof typeof notifications) => {
-    setNotifications(prev => ({
+    setNotifications((prev) => ({
       ...prev,
-      [key]: !prev[key]
-    }))
-  }
+      [key]: !prev[key],
+    }));
+  };
 
   const handlePrivacyChange = (key: keyof typeof privacy) => {
-    setPrivacy(prev => ({
+    setPrivacy((prev) => ({
       ...prev,
-      [key]: !prev[key]
-    }))
-  }
+      [key]: !prev[key],
+    }));
+  };
 
   const handleSavePreferences = async () => {
-    setSaving(true)
-    setMessage({ type: '', text: '' })
-    
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setMessage({ type: 'success', text: 'Preferences saved successfully!' })
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setMessage({ type: "success", text: "Preferences saved successfully!" });
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to save preferences' })
+      setMessage({ type: "error", text: "Failed to save preferences" });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handlePasswordChange = async () => {
-    if (passwordForm.new_password !== passwordForm.confirm_password) {
-      setMessage({ type: 'error', text: "New passwords do not match!" })
-      return
+    // basic validations
+    const current = (passwordForm.current_password || "").trim();
+    const nw = (passwordForm.new_password || "").trim();
+    const confirm = (passwordForm.confirm_password || "").trim();
+
+    if (!current || !nw || !confirm) {
+      setMessage({ type: "error", text: "Please fill all password fields." });
+      return;
     }
 
-    if (passwordForm.new_password.length < 6) {
-      setMessage({ type: 'error', text: "New password must be at least 6 characters long!" })
-      return
+    if (nw !== confirm) {
+      setMessage({ type: "error", text: "New passwords do not match." });
+      return;
     }
 
-    setSaving(true)
-    setMessage({ type: '', text: '' })
-    
+    if (nw.length < 6) {
+      setMessage({
+        type: "error",
+        text: "New password must be at least 6 characters.",
+      });
+      return;
+    }
+
+    setSaving(true);
+    setMessage({ type: "", text: "" });
+
     try {
-      const token = localStorage.getItem("token")
-      const response = await fetch('/api/auth/change-password/', {
+      const token = localStorage.getItem("token");
+      const res = await fetch(api("/api/auth/change-password/"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
-          current_password: passwordForm.current_password,
-          new_password: passwordForm.new_password,
+          current_password: current,
+          new_password: nw,
+          confirm_password: confirm,
         }),
-      })
+      });
 
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success) {
-          setMessage({ type: 'success', text: "Password changed successfully!" })
-          setPasswordForm({
-            current_password: "",
-            new_password: "",
-            confirm_password: "",
-          })
-        } else {
-          setMessage({ type: 'error', text: data.message || "Invalid current password" })
-        }
-      } else {
-        setMessage({ type: 'error', text: "Failed to change password. Please try again." })
+      const data = await res.json().catch(() => ({}));
+
+      if (res.status === 401) {
+        setMessage({
+          type: "error",
+          text: "Authentication required. Please login again.",
+        });
+        // optional: clear tokens and redirect to login
+        setTimeout(() => {
+          localStorage.removeItem("token");
+          router.push("/auth?mode=login");
+        }, 1200);
+        return;
       }
-    } catch (error) {
-      console.error("Error changing password:", error)
-      setMessage({ type: 'error', text: "Failed to change password. Please try again." })
+
+      if (!res.ok) {
+        setMessage({
+          type: "error",
+          text: data?.message || "Failed to change password. Please try again.",
+        });
+        return;
+      }
+
+      if (data && data.success) {
+        setMessage({
+          type: "success",
+          text: data.message || "Password changed successfully.",
+        });
+        setPasswordForm({
+          current_password: "",
+          new_password: "",
+          confirm_password: "",
+        });
+      } else {
+        setMessage({
+          type: "error",
+          text: data?.message || "Failed to change password.",
+        });
+      }
+    } catch (err) {
+      console.error("Change password error:", err);
+      setMessage({
+        type: "error",
+        text: "Failed to change password. Please try again.",
+      });
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const togglePasswordVisibility = (field: keyof typeof showPassword) => {
-    setShowPassword(prev => ({
+    setShowPassword((prev) => ({
       ...prev,
-      [field]: !prev[field]
-    }))
-  }
+      [field]: !prev[field],
+    }));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-cyan-50">
@@ -168,8 +216,12 @@ export default function CustomerSettings() {
                 <User className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Patient Settings</h1>
-                <p className="text-gray-600 text-sm">Manage your account and preferences</p>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Patient Settings
+                </h1>
+                <p className="text-gray-600 text-sm">
+                  Manage your account and preferences
+                </p>
               </div>
             </div>
           </div>
@@ -179,12 +231,14 @@ export default function CustomerSettings() {
       <div className="container mx-auto px-4 py-6">
         {/* Message Alert */}
         {message.text && (
-          <Alert className={`mb-6 ${
-            message.type === 'success' 
-              ? 'bg-green-50 border-green-200 text-green-800' 
-              : 'bg-red-50 border-red-200 text-red-800'
-          }`}>
-            {message.type === 'success' ? (
+          <Alert
+            className={`mb-6 ${
+              message.type === "success"
+                ? "bg-green-50 border-green-200 text-green-800"
+                : "bg-red-50 border-red-200 text-red-800"
+            }`}
+          >
+            {message.type === "success" ? (
               <CheckCircle className="w-4 h-4" />
             ) : (
               <AlertCircle className="w-4 h-4" />
@@ -233,10 +287,10 @@ export default function CustomerSettings() {
                       Member Since
                     </Label>
                     <div className="p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-gray-700">
-                      {new Date().toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
+                      {new Date().toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
                       })}
                     </div>
                   </div>
@@ -273,22 +327,38 @@ export default function CustomerSettings() {
                     sms: "SMS Notifications",
                     appointmentReminders: "Appointment Reminders",
                     healthTips: "Health Tips & Updates",
-                    marketing: "Marketing Communications"
+                    marketing: "Marketing Communications",
                   }).map(([key, label]) => (
-                    <div key={key} className="flex items-center justify-between py-3 border-b border-blue-50 last:border-b-0">
+                    <div
+                      key={key}
+                      className="flex items-center justify-between py-3 border-b border-blue-50 last:border-b-0"
+                    >
                       <div className="flex-1">
-                        <p className="font-medium text-sm text-gray-900">{label}</p>
+                        <p className="font-medium text-sm text-gray-900">
+                          {label}
+                        </p>
                         <p className="text-xs text-gray-600 mt-1">
-                          {key === 'email' && "Receive appointment reminders and updates via email"}
-                          {key === 'sms' && "Get SMS notifications for important updates"}
-                          {key === 'appointmentReminders' && "Reminders 24 hours before appointments"}
-                          {key === 'healthTips' && "Weekly health tips and wellness advice"}
-                          {key === 'marketing' && "Promotional offers and health program updates"}
+                          {key === "email" &&
+                            "Receive appointment reminders and updates via email"}
+                          {key === "sms" &&
+                            "Get SMS notifications for important updates"}
+                          {key === "appointmentReminders" &&
+                            "Reminders 24 hours before appointments"}
+                          {key === "healthTips" &&
+                            "Weekly health tips and wellness advice"}
+                          {key === "marketing" &&
+                            "Promotional offers and health program updates"}
                         </p>
                       </div>
                       <Switch
-                        checked={notifications[key as keyof typeof notifications]}
-                        onCheckedChange={() => handleNotificationChange(key as keyof typeof notifications)}
+                        checked={
+                          notifications[key as keyof typeof notifications]
+                        }
+                        onCheckedChange={() =>
+                          handleNotificationChange(
+                            key as keyof typeof notifications
+                          )
+                        }
                         className="data-[state=checked]:bg-blue-600"
                       />
                     </div>
@@ -328,7 +398,10 @@ export default function CustomerSettings() {
               <CardContent className="p-6 space-y-6">
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="current_password" className="text-sm font-semibold">
+                    <Label
+                      htmlFor="current_password"
+                      className="text-sm font-semibold"
+                    >
                       Current Password
                     </Label>
                     <div className="relative">
@@ -350,7 +423,7 @@ export default function CustomerSettings() {
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-12 px-3 py-2 hover:bg-transparent"
-                        onClick={() => togglePasswordVisibility('current')}
+                        onClick={() => togglePasswordVisibility("current")}
                       >
                         {showPassword.current ? (
                           <EyeOff className="w-4 h-4 text-gray-400" />
@@ -361,7 +434,10 @@ export default function CustomerSettings() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="new_password" className="text-sm font-semibold">
+                    <Label
+                      htmlFor="new_password"
+                      className="text-sm font-semibold"
+                    >
                       New Password
                     </Label>
                     <div className="relative">
@@ -383,7 +459,7 @@ export default function CustomerSettings() {
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-12 px-3 py-2 hover:bg-transparent"
-                        onClick={() => togglePasswordVisibility('new')}
+                        onClick={() => togglePasswordVisibility("new")}
                       >
                         {showPassword.new ? (
                           <EyeOff className="w-4 h-4 text-gray-400" />
@@ -394,7 +470,10 @@ export default function CustomerSettings() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="confirm_password" className="text-sm font-semibold">
+                    <Label
+                      htmlFor="confirm_password"
+                      className="text-sm font-semibold"
+                    >
                       Confirm New Password
                     </Label>
                     <div className="relative">
@@ -416,7 +495,7 @@ export default function CustomerSettings() {
                         variant="ghost"
                         size="sm"
                         className="absolute right-0 top-0 h-12 px-3 py-2 hover:bg-transparent"
-                        onClick={() => togglePasswordVisibility('confirm')}
+                        onClick={() => togglePasswordVisibility("confirm")}
                       >
                         {showPassword.confirm ? (
                           <EyeOff className="w-4 h-4 text-gray-400" />
@@ -429,7 +508,12 @@ export default function CustomerSettings() {
                 </div>
                 <Button
                   onClick={handlePasswordChange}
-                  disabled={saving || !passwordForm.current_password || !passwordForm.new_password || !passwordForm.confirm_password}
+                  disabled={
+                    saving ||
+                    !passwordForm.current_password ||
+                    !passwordForm.new_password ||
+                    !passwordForm.confirm_password
+                  }
                   className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 shadow-sm hover:shadow-md transition-all duration-200 disabled:opacity-50"
                 >
                   {saving ? (
@@ -462,20 +546,30 @@ export default function CustomerSettings() {
                 {Object.entries({
                   profileVisibility: "Profile Visibility",
                   medicalHistory: "Medical History Sharing",
-                  dataSharing: "Anonymous Data Sharing"
+                  dataSharing: "Anonymous Data Sharing",
                 }).map(([key, label]) => (
-                  <div key={key} className="flex items-center justify-between py-2">
+                  <div
+                    key={key}
+                    className="flex items-center justify-between py-2"
+                  >
                     <div className="flex-1">
-                      <p className="font-medium text-sm text-gray-900">{label}</p>
+                      <p className="font-medium text-sm text-gray-900">
+                        {label}
+                      </p>
                       <p className="text-xs text-gray-600 mt-1">
-                        {key === 'profileVisibility' && "Allow doctors to view your basic profile"}
-                        {key === 'medicalHistory' && "Share medical history with treating doctors"}
-                        {key === 'dataSharing' && "Contribute anonymized data for medical research"}
+                        {key === "profileVisibility" &&
+                          "Allow doctors to view your basic profile"}
+                        {key === "medicalHistory" &&
+                          "Share medical history with treating doctors"}
+                        {key === "dataSharing" &&
+                          "Contribute anonymized data for medical research"}
                       </p>
                     </div>
                     <Switch
                       checked={privacy[key as keyof typeof privacy]}
-                      onCheckedChange={() => handlePrivacyChange(key as keyof typeof privacy)}
+                      onCheckedChange={() =>
+                        handlePrivacyChange(key as keyof typeof privacy)
+                      }
                       className="data-[state=checked]:bg-green-600"
                     />
                   </div>
@@ -525,15 +619,24 @@ export default function CustomerSettings() {
                   Quick Actions
                 </h3>
                 <div className="space-y-3">
-                  <Button variant="outline" className="w-full justify-start border-blue-200 text-blue-600 hover:bg-blue-50">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start border-blue-200 text-blue-600 hover:bg-blue-50"
+                  >
                     <User className="w-4 h-4 mr-2" />
                     Update Profile
                   </Button>
-                  <Button variant="outline" className="w-full justify-start border-green-200 text-green-600 hover:bg-green-50">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start border-green-200 text-green-600 hover:bg-green-50"
+                  >
                     <Heart className="w-4 h-4 mr-2" />
                     Health Records
                   </Button>
-                  <Button variant="outline" className="w-full justify-start border-purple-200 text-purple-600 hover:bg-purple-50">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start border-purple-200 text-purple-600 hover:bg-purple-50"
+                  >
                     <Users className="w-4 h-4 mr-2" />
                     Family Accounts
                   </Button>
@@ -565,5 +668,5 @@ export default function CustomerSettings() {
         </div>
       </div>
     </div>
-  )
+  );
 }
