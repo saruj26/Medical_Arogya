@@ -6,7 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Plus, ShoppingCart, Trash2, Pill, FileText, Download, Receipt, Sparkles } from "lucide-react";
+import {
+  Plus,
+  ShoppingCart,
+  Trash2,
+  Pill,
+  FileText,
+  Download,
+  Receipt,
+  Sparkles,
+} from "lucide-react";
 import api from "@/lib/api";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
@@ -109,7 +118,7 @@ export default function PharmacistMedicinePage() {
 
   useEffect(() => {
     fetchProducts();
-    
+
     // Check for prescription draft
     const draft = localStorage.getItem("draftPrescriptionSale");
     if (draft) {
@@ -295,20 +304,26 @@ export default function PharmacistMedicinePage() {
         </div>
 
         <div style="margin-bottom: 15px;">
-          ${cart.map(item => {
-            const price = Number(item.product.price) || 0;
-            const discount = Number((item.product as any).discount) || 0;
-            const discounted = price * (1 - (discount || 0) / 100);
-            return `
+          ${cart
+            .map((item) => {
+              const price = Number(item.product.price) || 0;
+              const discount = Number((item.product as any).discount) || 0;
+              const discounted = price * (1 - (discount || 0) / 100);
+              return `
               <div style="display: flex; justify-content: space-between; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #f3f4f6;">
                 <div>
                   <div style="font-weight: 500;">${item.product.name}</div>
-                  <div style="font-size: 12px; color: #666;">${item.qty} x Rs. ${discounted.toFixed(2)}</div>
+                  <div style="font-size: 12px; color: #666;">${
+                    item.qty
+                  } x Rs. ${discounted.toFixed(2)}</div>
                 </div>
-                <div style="font-weight: bold;">Rs. ${(discounted * item.qty).toFixed(2)}</div>
+                <div style="font-weight: bold;">Rs. ${(
+                  discounted * item.qty
+                ).toFixed(2)}</div>
               </div>
             `;
-          }).join('')}
+            })
+            .join("")}
         </div>
 
         <div style="border-top: 2px dashed #e5e7eb; padding-top: 15px;">
@@ -335,7 +350,7 @@ export default function PharmacistMedicinePage() {
       </div>
     `;
 
-    const printWindow = window.open('', '_blank');
+    const printWindow = window.open("", "_blank");
     if (printWindow) {
       printWindow.document.write(`
         <html>
@@ -356,14 +371,14 @@ export default function PharmacistMedicinePage() {
     }
   };
 
-   const completeBilling = async () => {
+  const completeBilling = async () => {
     if (cart.length === 0) {
       Swal.fire({
         icon: "info",
         title: "Cart is empty",
         text: "Add products to the cart before billing.",
-        background: '#f8fafc',
-        color: '#1e293b',
+        background: "#f8fafc",
+        color: "#1e293b",
       });
       return;
     }
@@ -372,8 +387,8 @@ export default function PharmacistMedicinePage() {
         icon: "warning",
         title: "Customer name required",
         text: "Please enter the customer name.",
-        background: '#f8fafc',
-        color: '#1e293b',
+        background: "#f8fafc",
+        color: "#1e293b",
       });
       return;
     }
@@ -389,7 +404,7 @@ export default function PharmacistMedicinePage() {
 
     try {
       const token = localStorage.getItem("token");
-      
+
       // Step 1: Create the sale
       const res = await fetch(api(`/api/pharmacy/sales/`), {
         method: "POST",
@@ -401,15 +416,17 @@ export default function PharmacistMedicinePage() {
       });
 
       const data = await res.json().catch(() => ({}));
-      
+
       if (res.ok && data.success) {
         const saleId = data.sale?.id;
-        
+
         // Step 2: If this was from a prescription, mark it as dispensed
         if (prescriptionDraft && prescriptionDraft.prescription_id) {
           try {
             const dispenseRes = await fetch(
-              api(`/api/appointment/prescriptions/${prescriptionDraft.prescription_id}/dispense/`),
+              api(
+                `/api/appointment/prescriptions/${prescriptionDraft.prescription_id}/dispense/`
+              ),
               {
                 method: "POST",
                 headers: {
@@ -424,14 +441,20 @@ export default function PharmacistMedicinePage() {
             );
 
             const dispenseData = await dispenseRes.json().catch(() => ({}));
-            
+
             if (dispenseRes.ok && dispenseData.success) {
               console.log("Prescription marked as dispensed");
             } else {
-              console.warn("Failed to mark prescription as dispensed:", dispenseData);
+              console.warn(
+                "Failed to mark prescription as dispensed:",
+                dispenseData
+              );
             }
           } catch (dispenseError) {
-            console.error("Error marking prescription as dispensed:", dispenseError);
+            console.error(
+              "Error marking prescription as dispensed:",
+              dispenseError
+            );
           }
         }
 
@@ -439,19 +462,21 @@ export default function PharmacistMedicinePage() {
         await Swal.fire({
           icon: "success",
           title: "Billing Completed Successfully!",
-          text: `Sale ID: ${saleId || 'N/A'}`,
-          background: '#f0fdf4',
-          color: '#166534',
+          text: `Sale ID: ${saleId || "N/A"}`,
+          background: "#f0fdf4",
+          color: "#166534",
           showCancelButton: true,
-          confirmButtonText: 'Print Bill',
-          cancelButtonText: prescriptionDraft ? 'Back to Prescriptions' : 'Continue',
-          confirmButtonColor: '#1656a4',
-          cancelButtonColor: '#6b7280',
+          confirmButtonText: "Print Bill",
+          cancelButtonText: prescriptionDraft
+            ? "Back to Prescriptions"
+            : "Continue",
+          confirmButtonColor: "#1656a4",
+          cancelButtonColor: "#6b7280",
         }).then((result) => {
           if (result.isConfirmed) {
             printBill();
           }
-          
+
           // Redirect to prescriptions page if this was from a prescription
           if (prescriptionDraft) {
             setTimeout(() => {
@@ -466,17 +491,16 @@ export default function PharmacistMedicinePage() {
         setPhone("");
         setPrescriptionDraft(null);
         localStorage.removeItem("draftPrescriptionSale");
-        
+
         // Refresh products to reflect updated stock
         fetchProducts();
-
       } else {
         Swal.fire({
           icon: "error",
           title: "Billing Failed",
           text: data.message || "Please try again",
-          background: '#fef2f2',
-          color: '#dc2626',
+          background: "#fef2f2",
+          color: "#dc2626",
         });
       }
     } catch (e) {
@@ -485,8 +509,8 @@ export default function PharmacistMedicinePage() {
         icon: "error",
         title: "Error",
         text: "An error occurred while completing billing",
-        background: '#fef2f2',
-        color: '#dc2626',
+        background: "#fef2f2",
+        color: "#dc2626",
       });
     } finally {
       setIsProcessing(false);
@@ -623,8 +647,8 @@ export default function PharmacistMedicinePage() {
                   <Button size="sm" variant="outline" onClick={cancelMapping}>
                     Cancel
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     onClick={applyMappingToCart}
                     className="bg-gradient-to-r from-[#1656a4] to-cyan-600 hover:from-[#1656a4]/90 hover:to-cyan-600/90"
                   >
@@ -658,8 +682,8 @@ export default function PharmacistMedicinePage() {
 
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
             {filtered.map((p) => (
-              <Card 
-                key={p.id} 
+              <Card
+                key={p.id}
                 className="bg-white/90 backdrop-blur-sm border-0 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-[1.02]"
               >
                 <CardContent className="p-4">
@@ -761,7 +785,9 @@ export default function PharmacistMedicinePage() {
                   <div className="text-center py-8 text-gray-500">
                     <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                     <p className="text-sm">Cart is empty</p>
-                    <p className="text-xs mt-1">Add products to start billing</p>
+                    <p className="text-xs mt-1">
+                      Add products to start billing
+                    </p>
                   </div>
                 ) : (
                   cart.map((item) => (
@@ -795,7 +821,9 @@ export default function PharmacistMedicinePage() {
                           inputMode="numeric"
                           pattern="[0-9]*"
                           value={item.qty === 0 ? "" : item.qty}
-                          onChange={(e) => handleQtyChange(item.product.id, e.target.value)}
+                          onChange={(e) =>
+                            handleQtyChange(item.product.id, e.target.value)
+                          }
                           onBlur={() => handleBlur(item.product.id, item.qty)}
                           className="w-14 text-sm border rounded px-2 py-1 text-center"
                           placeholder="1"
@@ -825,12 +853,15 @@ export default function PharmacistMedicinePage() {
                     onChange={(e) => setCustomerName(e.target.value)}
                     placeholder="Customer Name *"
                     className="mb-3 border-2 border-gray-200 focus:border-[#1656a4]"
+                    disabled={false}
+                    autoFocus={true}
                   />
                   <Input
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="Phone Number"
                     className="border-2 border-gray-200 focus:border-[#1656a4]"
+                    disabled={false}
                   />
                 </div>
 
@@ -867,7 +898,9 @@ export default function PharmacistMedicinePage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Subtotal:</span>
-                      <span className="font-medium">Rs. {subtotal.toFixed(2)}</span>
+                      <span className="font-medium">
+                        Rs. {subtotal.toFixed(2)}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Tax (5%):</span>
@@ -886,7 +919,9 @@ export default function PharmacistMedicinePage() {
                 <div className="space-y-3">
                   <Button
                     onClick={completeBilling}
-                    disabled={cart.length === 0 || !customerName.trim() || isProcessing}
+                    disabled={
+                      cart.length === 0 || !customerName.trim() || isProcessing
+                    }
                     className="w-full bg-gradient-to-r from-[#1656a4] to-cyan-600 hover:from-[#1656a4]/90 hover:to-cyan-600/90 text-white py-3 text-lg font-semibold shadow-lg"
                   >
                     {isProcessing ? (
