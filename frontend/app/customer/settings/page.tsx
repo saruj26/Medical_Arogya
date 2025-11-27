@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import api from "@/lib/api";
+import Swal from "sweetalert2";
+import "sweetalert2/dist/sweetalert2.min.css";
 import {
   Card,
   CardContent,
@@ -114,17 +116,32 @@ export default function CustomerSettings() {
 
     if (!current || !nw || !confirm) {
       setMessage({ type: "error", text: "Please fill all password fields." });
+      Swal.fire({
+        icon: "error",
+        title: "Missing fields",
+        text: "Please fill all password fields.",
+      });
       return;
     }
 
     if (nw !== confirm) {
       setMessage({ type: "error", text: "New passwords do not match." });
+      Swal.fire({
+        icon: "error",
+        title: "Passwords do not match",
+        text: "New passwords do not match.",
+      });
       return;
     }
 
     if (nw.length < 6) {
       setMessage({
         type: "error",
+        text: "New password must be at least 6 characters.",
+      });
+      Swal.fire({
+        icon: "error",
+        title: "Password too short",
         text: "New password must be at least 6 characters.",
       });
       return;
@@ -155,6 +172,11 @@ export default function CustomerSettings() {
           type: "error",
           text: "Authentication required. Please login again.",
         });
+        Swal.fire({
+          icon: "warning",
+          title: "Session expired",
+          text: "Please login again.",
+        });
         // optional: clear tokens and redirect to login
         setTimeout(() => {
           localStorage.removeItem("token");
@@ -164,17 +186,22 @@ export default function CustomerSettings() {
       }
 
       if (!res.ok) {
-        setMessage({
-          type: "error",
-          text: data?.message || "Failed to change password. Please try again.",
-        });
+        const errText =
+          data?.message || "Failed to change password. Please try again.";
+        setMessage({ type: "error", text: errText });
+        Swal.fire({ icon: "error", title: "Error", text: errText });
         return;
       }
 
       if (data && data.success) {
-        setMessage({
-          type: "success",
-          text: data.message || "Password changed successfully.",
+        const successText = data.message || "Password changed successfully.";
+        setMessage({ type: "success", text: successText });
+        Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: successText,
+          timer: 1500,
+          showConfirmButton: false,
         });
         setPasswordForm({
           current_password: "",
@@ -182,17 +209,15 @@ export default function CustomerSettings() {
           confirm_password: "",
         });
       } else {
-        setMessage({
-          type: "error",
-          text: data?.message || "Failed to change password.",
-        });
+        const errText = data?.message || "Failed to change password.";
+        setMessage({ type: "error", text: errText });
+        Swal.fire({ icon: "error", title: "Error", text: errText });
       }
     } catch (err) {
       console.error("Change password error:", err);
-      setMessage({
-        type: "error",
-        text: "Failed to change password. Please try again.",
-      });
+      const errText = "Failed to change password. Please try again.";
+      setMessage({ type: "error", text: errText });
+      Swal.fire({ icon: "error", title: "Error", text: errText });
     } finally {
       setSaving(false);
     }

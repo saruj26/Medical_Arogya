@@ -453,7 +453,7 @@ export default function HomePage() {
                 <Phone className="w-6 h-6 text-blue-200 mb-3" />
                 <div className="text-blue-100 text-sm">Emergency Line</div>
                 <div className="text-white font-semibold">
-                  +1 (555) 123-HELP
+                  3433
                 </div>
               </div>
               <div className="flex flex-col items-center">
